@@ -1,0 +1,20 @@
+# Explicit Unignore
+!Makefile
+
+# Explicit ingore
+.DS_Store
+
+# Common generated files
+*.class
+*.o
+*.out
+*.aux
+*.log
+_site/*
+*bin/*
+*build/*
+ctags
+
+# Questionable generated files
+# *.pdf
+# *.html
