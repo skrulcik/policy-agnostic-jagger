@@ -3,6 +3,9 @@
 
 # Explicit ingore
 .DS_Store
+# Generated via gradle eclipse, no need to check in
+.classpath
+.settings
 
 # Common generated files
 *.class
