@@ -1,0 +1,26 @@
+apply plugin: 'java'
+apply plugin: 'idea'
+
+repositories {
+    jcenter()
+}
+
+def generatedMain = new File(buildDir, "generated/main")
+
+compileJava {
+    doFirst {
+        generatedMain.mkdirs()
+    }
+    options.compilerArgs += ['-s', generatedMain]
+}
+idea.module.sourceDirs += generatedMain
+
+dependencies {
+    compileOnly 'com.google.dagger:dagger-compiler:2.11'
+    compile 'com.google.dagger:dagger:2.11'
+}
+// Generate .classpath for Eclipse and Eclim compatibility
+apply plugin: "eclipse"
+// Create a run task
+apply plugin: "application"
+mainClassName="com.scottkrulcik.agnostic.Main"
