@@ -5,6 +5,7 @@
       <profile default="true" name="Default" enabled="true" />
     </annotationProcessing>
     <bytecodeTargetLevel>
+      <module name="policy-agnostic-dagger_generated" target="1.8" />
       <module name="policy-agnostic-dagger_main" target="1.8" />
       <module name="policy-agnostic-dagger_test" target="1.8" />
     </bytecodeTargetLevel>

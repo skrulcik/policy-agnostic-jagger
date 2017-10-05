@@ -1,4 +1,16 @@
+buildscript {
+    repositories {
+        maven {
+            url "https://plugins.gradle.org/m2/"
+        }
+    }
+    dependencies {
+        classpath "net.ltgt.gradle:gradle-apt-plugin:0.5"
+    }
+}
+apply plugin: 'net.ltgt.apt'
 apply plugin: 'java'
+apply plugin: 'application'
 apply plugin: 'idea'
 
 repositories {
@@ -16,11 +28,15 @@ compileJava {
 idea.module.sourceDirs += generatedMain
 
 dependencies {
-    compileOnly 'com.google.dagger:dagger-compiler:2.11'
-    compile 'com.google.dagger:dagger:2.11'
+
+    compileOnly    "com.google.auto.value:auto-value:1.5"
+    apt            "com.google.auto.value:auto-value:1.5"
+
+    compile        "com.google.dagger:dagger:2.11"
+    compileOnly    "com.google.dagger:dagger-compiler:2.11"
+    apt            "com.google.dagger:dagger-compiler:2.11"
+
 }
-// Generate .classpath for Eclipse and Eclim compatibility
-apply plugin: "eclipse"
-// Create a run task
-apply plugin: "application"
+
 mainClassName="com.scottkrulcik.agnostic.Main"
+
