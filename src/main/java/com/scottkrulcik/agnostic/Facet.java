@@ -3,13 +3,16 @@ package com.scottkrulcik.agnostic;
 
 import com.google.auto.value.AutoValue;
 import java.util.function.Function;
-import java.util.function.Predicate;
 
 @AutoValue
 public abstract class Facet<T> {
 
-    static <T> Facet<T> create(T high, T low) {
+    public static <T> Facet<T> create(T high, T low) {
         return new AutoValue_Facet<>(high, low);
+    }
+
+    static <T extends Restrictable<T>> Facet<T> faceted(T object) {
+        return create(object, object.defaultValue());
     }
 
     static <T, I> Function<Facet<I>, Facet<T>> wrap(Function<I, T> f) {

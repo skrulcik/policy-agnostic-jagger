@@ -3,6 +3,7 @@ package com.scottkrulcik.agnostic;
 /**
  * Limits the visibility of an object.
  */
+@FunctionalInterface
 public interface Restriction<T> {
 
     /**

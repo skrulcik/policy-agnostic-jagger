@@ -1,10 +1,10 @@
 package com.scottkrulcik.agnostic;
 
 
-import static java.util.Collections.emptySet;
-
-import java.util.HashMap;
-import java.util.Map;
+import com.google.common.collect.ArrayListMultimap;
+import com.google.common.collect.Multimap;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -13,9 +13,13 @@ import java.util.Set;
  */
 public final class Policy {
 
-    private final Map<Class<?>, Object> restrictions = new HashMap<>();
+    private final Multimap<Class<?>, Object> restrictions = ArrayListMultimap.create();
 
-    public <T> T concretize(ViewingContext context, Facet<T> facet, Class<Set<Restriction<T>>>
+    public <T extends Restrictable<T>> T concretize(ViewingContext context,  T object) {
+        return concretize(context, Facet.faceted(object), object.token());
+    }
+
+    public <T> T concretize(ViewingContext context, Facet<T> facet, Class<ArrayList<Restriction<T>>>
         clazz) {
         if (canSee(context, facet.high(), clazz)) {
             return facet.high();
@@ -24,10 +28,9 @@ public final class Policy {
         }
     }
 
-    private <T> boolean canSee(ViewingContext context,  T instance, Class<Set<Restriction<T>>>
+    private <T> boolean canSee(ViewingContext context,  T instance, Class<ArrayList<Restriction<T>>>
         clazz) {
-        Set<Restriction<T>> applicableRestrictions =
-            clazz.cast(this.restrictions.getOrDefault(clazz, emptySet()));
+        List<Restriction<T>> applicableRestrictions = getRestrictions(clazz);
         for (Restriction<T> restriction : applicableRestrictions) {
             if (!restriction.isVisible(context, instance)) {
                 return false;
@@ -36,11 +39,12 @@ public final class Policy {
         return true;
     }
 
-    public <T> void addRestriction(Class<Set<Restriction<T>>> clazz, Restriction<T> restriction) {
+    public <T> void addRestriction(Class<Restriction<T>> clazz, Restriction<T> restriction) {
+        // TODO(krulcik): Multiple restrictions
         restrictions.put(clazz, restriction);
     }
 
-    private <T> Set<Restriction<T>> getRestrictions(Class<Set<Restriction<T>>> clazz) {
+    private <T> List<Restriction<T>> getRestrictions(Class<ArrayList<Restriction<T>>> clazz) {
         return clazz.cast(restrictions.get(clazz));
     }
 
