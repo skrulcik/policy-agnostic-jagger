@@ -2,9 +2,8 @@ package com.scottkrulcik.agnostic.examples.guests;
 
 
 import com.google.common.collect.ImmutableList;
+import com.google.common.reflect.TypeToken;
 import com.scottkrulcik.agnostic.Restrictable;
-import com.scottkrulcik.agnostic.Restriction;
-import java.util.ArrayList;
 import java.util.List;
 
 final class Event implements Restrictable<Event> {
@@ -37,16 +36,8 @@ final class Event implements Restrictable<Event> {
 
     private static final Event WORKAROUND = new Event(null, null, ImmutableList.of());
 
-    public static Class<ArrayList<Restriction<Event>>> staticToken() {
-//        Set<Restriction<Event>> DUMMY = new HashSet<>();
-//        return (Class<Set<Restriction<Event>>>) DUMMY.getClass();
+    public static TypeToken<Event> staticToken() {
         return WORKAROUND.token();
-    }
-
-    @SuppressWarnings("unchecked")
-    public static Class<Restriction<Event>> staticToken2() {
-        Restriction<Event> bullshit = (context, eventRestriction) -> false;
-        return (Class<Restriction<Event>>) bullshit.getClass();
     }
 
     @Override

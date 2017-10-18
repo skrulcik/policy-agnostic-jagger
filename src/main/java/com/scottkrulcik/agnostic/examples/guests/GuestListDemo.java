@@ -12,19 +12,20 @@ public final class GuestListDemo {
         // Create people and events
         Person scott = Person.create("Scott");
         Person serena = Person.create("Serena");
+        Person jordan = Person.create("Jordan");
         Person jean = Person.create("Jean");
 
-        ImmutableList<Person> conspirators = ImmutableList.of(serena);
+        ImmutableList<Person> conspirators = ImmutableList.of(serena, jordan);
         Event cookieMaking = new Event("Cookie Making", scott, conspirators);
 
         // Define the policy
         Policy policy = new Policy();
-        policy.addRestriction(Event.staticToken2(), (context, event) -> {
+        policy.addRestriction(Event.staticToken(), (context, event) -> {
             Person viewer = context.get(Person.class);
             return event.owner().equals(viewer) || event.guestList().contains(viewer);
         });
 
-        for (Person person : ImmutableList.of(scott, serena, jean)) {
+        for (Person person : ImmutableList.of(scott, serena, jordan, jean)) {
             printVisibility(policy, person, cookieMaking);
         }
     }
@@ -32,6 +33,6 @@ public final class GuestListDemo {
     private static void printVisibility(Policy policy, Person person, Event event) {
         ViewingContext userContext = new ViewingContext(ImmutableMap.of(Person.class, person));
         List<Person> visibleList = policy.concretize(userContext, event).guestList();
-        System.out.println(person.name() + " can see " + visibleList);
+        System.out.println(person.name() + " can see guests " + visibleList);
     }
 }
