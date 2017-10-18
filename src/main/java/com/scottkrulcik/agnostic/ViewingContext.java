@@ -8,7 +8,7 @@ import java.util.Map;
  */
 public final class ViewingContext {
 
-    private final ImmutableMap<Class<@Viewer ?>,Object> container;
+    private final ImmutableMap<Class<?>,Object> container;
 
     public ViewingContext() {
         this(ImmutableMap.of());
@@ -18,13 +18,13 @@ public final class ViewingContext {
         this.container = ImmutableMap.copyOf(container);
     }
 
-    public <@Viewer T> T get(Class<T> classKey) {
+    public <T> T get(Class<T> classKey) {
         return classKey.cast(container.get(classKey));
     }
 
-    public <@Viewer T> ViewingContext deriveContext(Class<T> classKey, T instance) {
-        ImmutableMap<Class<@Viewer ?>, Object> newContainer =
-            ImmutableMap.<Class<@Viewer ?>, Object>builder()
+    public <T> ViewingContext deriveContext(Class<T> classKey, T instance) {
+        ImmutableMap<Class<?>, Object> newContainer =
+            ImmutableMap.<Class<?>, Object>builder()
             .putAll(container)
             .put(classKey, instance)
             .build();
