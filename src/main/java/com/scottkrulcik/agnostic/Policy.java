@@ -7,8 +7,8 @@ import com.google.common.reflect.TypeToken;
 import java.util.Set;
 
 /**
- * Privacy policy for the application, determining if {@link Label labeled} sensitive values can
- * be viewed under specific {@link ViewingContext viewing contexts}.
+ * Privacy policy for the application, determining if {@link Restrictable restrictable} sensitive
+ * values can be viewed under specific {@link ViewingContext viewing contexts}.
  */
 public final class Policy {
 
