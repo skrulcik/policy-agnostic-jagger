@@ -34,6 +34,7 @@ dependencies {
     apt            "com.google.auto.value:auto-value:1.5"
 
     compile        "com.google.dagger:dagger:2.11"
+    compile        "com.google.dagger:dagger-producers:2.11"
     compileOnly    "com.google.dagger:dagger-compiler:2.11"
     apt            "com.google.dagger:dagger-compiler:2.11"
 
