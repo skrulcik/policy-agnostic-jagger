@@ -29,6 +29,6 @@ public abstract class Facet<T> {
         };
     }
 
-    public abstract T high();
-    public abstract T low();
+    abstract T high();
+    abstract T low();
 }
