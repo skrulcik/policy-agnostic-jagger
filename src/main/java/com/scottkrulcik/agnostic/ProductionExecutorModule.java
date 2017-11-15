@@ -8,12 +8,12 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 @Module
-public final class PolicyExecutorModule {
+public final class ProductionExecutorModule {
     private static final ExecutorService exec = Executors.newCachedThreadPool();
 
     @Provides
     @Production
-    static Executor providePolicyExecutor() {
+    static Executor provideExecutor() {
         return exec;
     }
 }
