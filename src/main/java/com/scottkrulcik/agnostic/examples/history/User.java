@@ -11,4 +11,8 @@ public abstract class User implements Restrictable<User> {
 
     public abstract String name();
     public abstract SearchHistory history();
+
+    public User defaultValue() {
+        return new AutoValue_User("NO_NAME", new SearchHistory());
+    }
 }
