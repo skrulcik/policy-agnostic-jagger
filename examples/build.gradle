@@ -3,8 +3,6 @@ plugins {
     id "net.ltgt.apt" version "0.13"
 }
 
-apply plugin: 'java'
-apply plugin: 'idea'
 apply plugin: 'application'
 
 def generatedMain = new File(buildDir, "generated/main")
