@@ -15,7 +15,8 @@
 *.log
 _site/*
 *bin/*
-*build/*
+build/
+generated/
 ctags
 .gradle
 
