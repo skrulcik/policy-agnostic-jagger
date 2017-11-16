@@ -1,0 +1,30 @@
+plugins {
+    // Annotation processing plugin
+    id "net.ltgt.apt" version "0.13"
+}
+
+apply plugin: 'java'
+apply plugin: 'idea'
+
+def generatedMain = new File(buildDir, "generated/main")
+
+compileJava {
+    doFirst {
+        generatedMain.mkdirs()
+    }
+    options.compilerArgs += ['-s', generatedMain]
+}
+idea.module.sourceDirs += generatedMain
+
+
+dependencies {
+    compile group: 'com.google.guava', name: 'guava', version: '22.0'
+
+    compileOnly    "com.google.auto.value:auto-value:1.5"
+    apt            "com.google.auto.value:auto-value:1.5"
+
+    compile        "com.google.dagger:dagger:2.11"
+    compile        "com.google.dagger:dagger-producers:2.11"
+    compileOnly    "com.google.dagger:dagger-compiler:2.11"
+    apt            "com.google.dagger:dagger-compiler:2.11"
+}

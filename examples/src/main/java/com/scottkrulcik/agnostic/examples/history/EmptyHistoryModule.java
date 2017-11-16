@@ -22,8 +22,8 @@ public class EmptyHistoryModule {
     }
 
     @Produces
-    static Facet<SearchHistory> produceHistoryFacet(@High SearchHistory high, @Low SearchHistory
+    static SearchHistory produceHistoryFacet(@High SearchHistory high, @Low SearchHistory
         low) {
-        return Facet.create(high, low);
+        return low;
     }
 }
