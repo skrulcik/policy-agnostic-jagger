@@ -23,8 +23,6 @@ ctags
 # Questionable generated files
 # *.pdf
 # *.html
-code
-test
 
 # Eclipse and IntelliJ
 .project
