@@ -8,5 +8,5 @@ import dagger.producers.ProductionComponent;
 @ProductionComponent(modules = {EmptyHistoryModule.class, ProductionExecutorModule.class},
     dependencies = User.class)
 public interface AdComponent {
-    ListenableFuture<SearchHistory> history();
+    ListenableFuture<Facet<SearchHistory>> history();
 }

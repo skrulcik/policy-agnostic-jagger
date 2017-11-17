@@ -2,8 +2,10 @@ package com.scottkrulcik.agnostic.examples.guests;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import com.scottkrulcik.agnostic.Facet;
 import com.scottkrulcik.agnostic.Policy;
 import com.scottkrulcik.agnostic.ViewingContext;
+
 import java.util.List;
 
 public final class GuestListDemo {
@@ -32,7 +34,9 @@ public final class GuestListDemo {
 
     private static void printVisibility(Policy policy, Person person, Event event) {
         ViewingContext userContext = new ViewingContext(ImmutableMap.of(Person.class, person));
-        List<Person> visibleList = policy.concretize(userContext, event).guestList();
+        Facet<Event> fEvent = Facet.create(event, Event.defaultInstance());
+        List<Person> visibleList =
+            policy.concretize(userContext, fEvent, Event.staticToken()).guestList();
         System.out.println(person.name() + " can see guests " + visibleList);
     }
 }

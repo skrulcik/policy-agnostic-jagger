@@ -7,20 +7,16 @@ import com.google.common.reflect.TypeToken;
 import java.util.Set;
 
 /**
- * Privacy policy for the application, determining if {@link Restrictable restrictable} sensitive
- * values can be viewed under specific {@link ViewingContext viewing contexts}.
+ * Privacy policy for the application, determining if sensitive values can be viewed under specific
+ * {@link ViewingContext viewing contexts}.
  */
 public final class Policy {
 
-    private final Multimap<TypeToken<? extends Restrictable<?>>, Object> restrictions =
+    private final Multimap<TypeToken<?>, Object> restrictions =
         HashMultimap
         .create();
 
-    public <T extends Restrictable<T>> T concretize(ViewingContext context,  T object) {
-        return concretize(context, Facet.faceted(object), object.token());
-    }
-
-    public <T extends Restrictable<T>> T concretize(ViewingContext context, Facet<T> facet,
+    public <T> T concretize(ViewingContext context, Facet<T> facet,
         TypeToken<T> token) {
 
         if (canSee(context, facet.high(), token)) {
@@ -30,7 +26,7 @@ public final class Policy {
         }
     }
 
-    private <T extends Restrictable<T>> boolean canSee(ViewingContext context,  T
+    private <T> boolean canSee(ViewingContext context,  T
         instance,
         TypeToken<T>
         token) {
@@ -43,7 +39,7 @@ public final class Policy {
         return true;
     }
 
-    public <T extends Restrictable<T>> void addRestriction(TypeToken<T> token, Restriction<T>
+    public <T> void addRestriction(TypeToken<T> token, Restriction<T>
         restriction) {
         restrictions.put(token, restriction);
     }
@@ -64,7 +60,7 @@ public final class Policy {
      * @param <T> The type to retrieve restrictions from.
      * @return The set of restrictions applicable to {@code T}.
      */
-    private <T extends Restrictable<T>> Set<? extends Restriction<T>> getRestrictions(TypeToken<T>
+    private <T> Set<? extends Restriction<T>> getRestrictions(TypeToken<T>
         token) {
         TypeToken<Set<Restriction<T>>> listToken = new TypeToken<Set<Restriction<T>>>() {};
         @SuppressWarnings("unchecked")

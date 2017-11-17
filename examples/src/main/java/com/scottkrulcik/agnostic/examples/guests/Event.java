@@ -1,12 +1,12 @@
 package com.scottkrulcik.agnostic.examples.guests;
 
 
-import com.google.common.collect.ImmutableList;
-import com.google.common.reflect.TypeToken;
-import com.scottkrulcik.agnostic.Restrictable;
 import java.util.List;
 
-final class Event implements Restrictable<Event> {
+import com.google.common.collect.ImmutableList;
+import com.google.common.reflect.TypeToken;
+
+final class Event {
     private final String name;
     private final Person owner;
     private final ImmutableList<Person> guestList;
@@ -29,15 +29,12 @@ final class Event implements Restrictable<Event> {
         return owner;
     }
 
-    @Override
-    public Event defaultValue() {
-        return new Event(name, owner, ImmutableList.of());
+    public static Event defaultInstance() {
+        return new Event("Anonymous", null, ImmutableList.of());
     }
 
-    private static final Event WORKAROUND = new Event(null, null, ImmutableList.of());
-
     public static TypeToken<Event> staticToken() {
-        return WORKAROUND.token();
+        return new TypeToken<Event>() {};
     }
 
     @Override

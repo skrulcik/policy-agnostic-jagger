@@ -1,10 +1,9 @@
 package com.scottkrulcik.agnostic.examples.history;
 
-import com.scottkrulcik.agnostic.Restrictable;
 import java.util.ArrayList;
 import java.util.List;
 
-public final class SearchHistory implements Restrictable<SearchHistory> {
+public final class SearchHistory {
     private final List<String> pastSearches = new ArrayList<>();
 
     SearchHistory() { }
@@ -22,10 +21,5 @@ public final class SearchHistory implements Restrictable<SearchHistory> {
         return "SearchHistory{" +
             "pastSearches=" + pastSearches +
             '}';
-    }
-
-    @Override
-    public SearchHistory defaultValue() {
-        return new SearchHistory();
     }
 }

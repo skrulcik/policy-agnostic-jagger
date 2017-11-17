@@ -11,10 +11,6 @@ public abstract class Facet<T> {
         return new AutoValue_Facet<>(high, low);
     }
 
-    static <T extends Restrictable<T>> Facet<T> faceted(T object) {
-        return create(object, object.defaultValue());
-    }
-
     static <T, I> Function<Facet<I>, Facet<T>> wrap(Function<I, T> f) {
         return (inputFacet) -> new Facet<T>() {
             @Override
