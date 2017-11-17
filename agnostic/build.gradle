@@ -5,7 +5,7 @@ plugins {
 
 apply plugin: 'java'
 
-def generatedMain = new File(buildDir, "generated/main")
+def generatedMain = new File(buildDir, "generated/")
 
 compileJava {
     doFirst {

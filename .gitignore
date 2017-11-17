@@ -27,4 +27,5 @@ ctags
 # Eclipse and IntelliJ
 .project
 .idea
+*.iml
 
