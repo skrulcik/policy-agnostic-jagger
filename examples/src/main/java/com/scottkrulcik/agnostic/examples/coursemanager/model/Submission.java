@@ -2,7 +2,6 @@ package com.scottkrulcik.agnostic.examples.coursemanager.model;
 
 import com.google.auto.value.AutoValue;
 import java.util.Date;
-import jdk.nashorn.internal.ir.Assignment;
 
 @AutoValue
 public abstract class Submission {

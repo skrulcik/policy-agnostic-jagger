@@ -4,7 +4,7 @@ import com.google.auto.value.AutoValue;
 
 @AutoValue
 public abstract class Student {
-    public Student create(String name, Teacher teacher) {
+    public static Student create(String name, Teacher teacher) {
         return new com.scottkrulcik.agnostic.examples.coursemanager.model.AutoValue_Student(name, teacher);
     }
 

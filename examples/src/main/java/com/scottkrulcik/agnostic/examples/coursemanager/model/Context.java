@@ -7,6 +7,11 @@ import java.util.Optional;
  */
 public final class Context {
     private Teacher currentUser;
+    private final DataStore dataStore = new DataStore();
+
+    public DataStore getDataStore() {
+        return dataStore;
+    }
 
     public Optional<Teacher> getCurrentUser() {
         return Optional.ofNullable(currentUser);
