@@ -8,7 +8,7 @@ import java.util.function.Function;
 public abstract class Facet<T> {
 
     public static <T> Facet<T> create(T high, T low) {
-        return new AutoValue_Facet<>(high, low);
+        return new com.scottkrulcik.agnostic.AutoValue_Facet<>(high, low);
     }
 
     static <T, I> Function<Facet<I>, Facet<T>> wrap(Function<I, T> f) {
