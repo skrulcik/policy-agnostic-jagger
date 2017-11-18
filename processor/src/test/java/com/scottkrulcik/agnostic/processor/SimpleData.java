@@ -50,8 +50,9 @@ public class SimpleData {
     private final String name;
     private final Date creationDate;
 
-    public SimpleData(String name) {
-        this.name = name;
+    public SimpleData() {
+        // TODO(skrulcik): Remove hard-coded name once constructors are implemented
+        this.name = "Scott";
         this.creationDate = new Date();
     }
 

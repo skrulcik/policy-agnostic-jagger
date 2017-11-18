@@ -5,19 +5,21 @@ import static com.scottkrulcik.agnostic.processor.AnnotationUtils.getAnnotationV
 
 import com.google.auto.service.AutoService;
 import com.google.common.base.Preconditions;
-import com.scottkrulcik.agnostic.Restriction;
 import com.scottkrulcik.agnostic.ViewingContext;
 import com.scottkrulcik.agnostic.annotations.Faceted;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.FieldSpec;
+import com.squareup.javapoet.JavaFile;
 import com.squareup.javapoet.MethodSpec;
 import com.squareup.javapoet.ParameterizedTypeName;
 import com.squareup.javapoet.TypeName;
 import com.squareup.javapoet.TypeSpec;
+import java.io.IOException;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import javax.annotation.processing.AbstractProcessor;
 import javax.annotation.processing.Filer;
@@ -32,11 +34,13 @@ import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.Modifier;
 import javax.lang.model.element.NestingKind;
+import javax.lang.model.element.PackageElement;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.type.TypeMirror;
 import javax.lang.model.util.Elements;
 import javax.lang.model.util.Types;
 import javax.tools.Diagnostic;
+import javax.tools.Diagnostic.Kind;
 
 
 /**
@@ -138,20 +142,36 @@ public class FacetProcessor extends AbstractProcessor {
             System.out.println("Processing " + originalClass); // SCOTT DEBUG ONLY
 
             TypeSpec.Builder faceted = TypeSpec.classBuilder(facetedName(originalClass))
-                .addSuperinterface(TypeName.get(originalClass.asType()))
+                .superclass(TypeName.get(originalClass.asType()))
                 .addModifiers(Modifier.PUBLIC, Modifier.FINAL);
 
             for (FacetedMethod method : getEnclosedFacetedMethods(originalClass)) {
                 System.out.println(" +- " + method);
                 faceted.addField(method.labelField);
+                faceted.addField(method.lowField);
                 faceted.addMethod(method.wrapperSpec(typeUtils));
             }
 
             System.out.println(" +---------");
-            System.out.println(faceted.build());
+
+            // Write the faceted version of the class into a java source file
+            String originalPackage = ((PackageElement)originalClass.getEnclosingElement())
+                .getQualifiedName().toString();
+            JavaFile output = JavaFile.builder(originalPackage, faceted.build()).build();
+            try {
+                output.writeTo(filer);
+            } catch (IOException e) {
+                e.printStackTrace();
+                messager.printMessage(Kind.ERROR, "Error writing to java file", originalClass);
+            }
+
         }
 
         return true;
+    }
+
+    private static  TypeElement asElement(Types typeUtils, TypeMirror mirror) {
+        return (TypeElement) typeUtils.asElement(mirror);
     }
 
     /**
@@ -214,30 +234,29 @@ public class FacetProcessor extends AbstractProcessor {
             return facetedName(originalMethod) + "LowSecurity";
         }
 
-        static  TypeElement asElement(Types typeUtils, TypeMirror mirror) {
-            return (TypeElement) typeUtils.asElement(mirror);
-        }
-
         MethodSpec wrapperSpec(Types typeUtils) {
             // TODO(skrulcik): Super fragile! Consider parameters and thrown exceptions
             TypeElement implementationType = asElement(typeUtils, labelClass);
             TypeElement parametrized = asElement(typeUtils, implementationType.getSuperclass());
-            TypeName contextName = TypeName.get(parametrized.getTypeParameters().get(0).asType());
-            ClassName restrictionName = ClassName.get(Restriction.class);
-            TypeName restrictionType = ParameterizedTypeName.get(restrictionName, contextName);
+            // TODO(skrulcik): Figure out how to get around this hard-coded ViewingContext part
+            ClassName contextName = ClassName.get(ViewingContext.class);
+            ClassName predicateName = ClassName.get(Predicate.class);
+            TypeName predicateType = ParameterizedTypeName.get(predicateName, contextName);
 
             return MethodSpec.methodBuilder(facetedName(originalMethod))
                 .addModifiers(Modifier.PUBLIC, Modifier.FINAL)
                 .returns(TypeName.get(originalMethod.getReturnType()))
                 // TODO(skrulcik): Support more than // viewing context
                 .addParameter(ViewingContext.class, CTX)
-                .beginControlFlow("for ($T $L : $N)", restrictionType, "restriction", labelField)
+                .beginControlFlow("for ($T $L : $N.restrictions())", predicateType,
+                    "restriction", labelField)
                 .beginControlFlow("if (!restriction.test($L))", CTX)
                 .addStatement("return $N.call()", lowField)
                 .endControlFlow()
                 .endControlFlow()
                 // Assumes no parameters in original method
                 .addStatement("return $L", originalMethod)
+                .addException(Exception.class)
                 .build();
         }
 
