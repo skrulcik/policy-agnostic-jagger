@@ -1,6 +1,6 @@
 package com.scottkrulcik.agnostic.annotations;
 
-import static java.lang.annotation.ElementType.TYPE;
+import static java.lang.annotation.ElementType.METHOD;
 import static java.lang.annotation.RetentionPolicy.RUNTIME;
 
 import com.scottkrulcik.agnostic.LabelDefinition;
@@ -11,7 +11,7 @@ import java.util.concurrent.Callable;
 /**
  * Marks a type as being a faceted value guarded by the given label.
  */
-@Target(TYPE)
+@Target(METHOD)
 @Retention(RUNTIME)
 public @interface Faceted {
 
