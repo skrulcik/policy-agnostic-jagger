@@ -18,7 +18,7 @@ public @interface Faceted {
     /**
      * One or more labels guarding this facet.
      */
-    public Class<? extends LabelDefinition<?>> label();
+    Class<? extends LabelDefinition<?>> label();
 
     /**
      * A function that produces the default value for this class.
@@ -26,6 +26,6 @@ public @interface Faceted {
      * It is assumed that the callable will always return the same instance. If parameter could
      * be an instance it would be, but {@link Callable} is just a workaround.
      */
-    public Class<? extends Callable<?>> low();
+    Class<? extends Callable<?>> low();
 
 }
