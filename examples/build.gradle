@@ -19,8 +19,10 @@ idea.module.sourceDirs += generatedMain
 dependencies {
     compile group: 'com.google.guava', name: 'guava', version: '22.0'
 
+    // AutoValue and extensions
     compileOnly    "com.google.auto.value:auto-value:1.5"
     apt            "com.google.auto.value:auto-value:1.5"
+    apt            "com.gabrielittner.auto.value:auto-value-with:1.0.0"
 
     compile        "com.google.dagger:dagger:2.11"
     compile        "com.google.dagger:dagger-producers:2.11"
