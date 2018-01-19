@@ -1,34 +1,30 @@
 plugins {
-    // Annotation processing plugin
-    id "net.ltgt.apt" version "0.13"
+    // application plugin makes :examples the runnable project
+    id 'application'
+    // annotation processing plugin
+    id 'net.ltgt.apt' version '0.13'
 }
 
-apply plugin: 'application'
-
-def generatedMain = new File(buildDir, "generated/")
-
-compileJava {
-    doFirst {
-        generatedMain.mkdirs()
-    }
-    options.compilerArgs += ['-s', generatedMain]
-}
-idea.module.sourceDirs += generatedMain
-
-//    annotationProcessor project(':randomizer-processor')
 dependencies {
-    compile group: 'com.google.guava', name: 'guava', version: '22.0'
+    // Annoation processors
+    apt            'com.gabrielittner.auto.value:auto-value-with:1.0.0'
+    apt            'com.google.auto.value:auto-value:1.5'
+    apt            'com.google.dagger:dagger-compiler:2.11'
+    apt            project(':processor')
 
     // AutoValue and extensions
-    compileOnly    "com.google.auto.value:auto-value:1.5"
-    apt            "com.google.auto.value:auto-value:1.5"
-    apt            "com.gabrielittner.auto.value:auto-value-with:1.0.0"
+    implementation 'com.google.dagger:dagger-producers:2.11'
+    implementation 'com.google.dagger:dagger:2.11'
 
-    compile        "com.google.dagger:dagger:2.11"
-    compile        "com.google.dagger:dagger-producers:2.11"
-    compileOnly    "com.google.dagger:dagger-compiler:2.11"
-    apt            "com.google.dagger:dagger-compiler:2.11"
+    implementation 'com.google.auto.value:auto-value:1.5'
+    implementation 'com.google.dagger:dagger-compiler:2.11'
+    implementation 'com.gabrielittner.auto.value:auto-value-with:1.0.0'
 }
 
-mainClassName="com.scottkrulcik.agnostic.Main"
+compileJava {
+    // options.annotationProcessorPath = configurations.apt
+    options.annotationProcessorPath = files('/Users/Scott/Projects/Java/policy-agnostic-dagger/processor/build/libs/')
+}
+
+mainClassName='com.scottkrulcik.agnostic.Main'
 

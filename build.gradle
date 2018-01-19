@@ -1,3 +1,11 @@
+/*
+ * Top-level build file for the Jagger project.
+ *
+ * A uniform Java configuration is defined for all subprojects. All
+ * inter-project dependencies are defined in this top-level build, while
+ * external dependencies are defined in the individual projects.
+ */
+
 subprojects {
     apply plugin: 'java'
     apply plugin: 'idea'
@@ -13,13 +21,31 @@ subprojects {
     }
 
     dependencies {
+        implementation 'com.google.guava:guava:22.0'
         testCompile "junit:junit:4.12"
     }
+
+    // Add generated files to IntelliJ configurationk
+    def generatedMain = new File(buildDir, "generated/")
+    compileJava {
+        doFirst {
+            generatedMain.mkdirs()
+        }
+        options.compilerArgs += ['-s', generatedMain]
+    }
+    idea.module.sourceDirs += generatedMain
+
+}
+
+project(':agnostic') {
+    apply plugin: 'java-library'
 }
 
 project(':processor') {
+    apply plugin: 'java-library'
+
     dependencies {
-        compile project(':agnostic')
+        api project(':agnostic')
     }
 }
 

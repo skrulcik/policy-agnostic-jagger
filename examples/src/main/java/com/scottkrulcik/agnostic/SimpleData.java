@@ -1,4 +1,4 @@
-package com.scottkrulcik.agnostic.processor;
+package com.scottkrulcik.agnostic;
 
 import com.scottkrulcik.agnostic.LabelDefinition;
 import com.scottkrulcik.agnostic.ViewingContext;
