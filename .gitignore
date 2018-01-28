@@ -17,6 +17,8 @@ _site/*
 bin/
 build/
 generated/
+generated_src/
+out/
 ctags
 .gradle
 
@@ -28,4 +30,4 @@ ctags
 .project
 .idea
 *.iml
-
+.factorypath
