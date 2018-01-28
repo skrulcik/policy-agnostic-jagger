@@ -25,16 +25,6 @@ subprojects {
         testCompile "junit:junit:4.12"
     }
 
-    // Add generated files to IntelliJ configurationk
-    def generatedMain = new File(buildDir, "generated/")
-    compileJava {
-        doFirst {
-            generatedMain.mkdirs()
-        }
-        options.compilerArgs += ['-s', generatedMain]
-    }
-    idea.module.sourceDirs += generatedMain
-
 }
 
 project(':agnostic') {
