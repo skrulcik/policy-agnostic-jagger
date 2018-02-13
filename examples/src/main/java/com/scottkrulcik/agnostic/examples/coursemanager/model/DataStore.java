@@ -11,7 +11,7 @@ import java.util.stream.Collectors;
  * Simple container for application data.
  */
 public final class DataStore {
-    public final Multimap<Class<?>, Object> data = HashMultimap.create();
+    private final Multimap<Class<?>, Object> data = HashMultimap.create();
 
     public <T> void add(Class<T> clazz, T instance) {
         data.put(clazz, instance);
