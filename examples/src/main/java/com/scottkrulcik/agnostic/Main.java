@@ -1,5 +1,11 @@
 package com.scottkrulcik.agnostic;
 
+import com.google.common.collect.ArrayListMultimap;
+import com.google.common.collect.Multimap;
+import com.google.common.graph.Graph;
+import com.google.common.graph.GraphBuilder;
+import com.google.common.graph.Graphs;
+import com.google.common.graph.MutableGraph;
 import com.scottkrulcik.agnostic.annotations.Raw;
 import com.scottkrulcik.agnostic.examples.guests.GuestListDemo;
 import com.scottkrulcik.agnostic.examples.history.SearchHistoryDemo;
@@ -7,6 +13,7 @@ import dagger.BindsInstance;
 import dagger.Component;
 import dagger.Module;
 import dagger.Provides;
+import java.util.Collection;
 
 /**
  * Tests that injection is working properly.
@@ -55,6 +62,7 @@ public class Main {
         GuestListDemo.main(new String[0]);
 
         System.out.println("----------------------------------------");
+        System.out.println("Data Filter demo");
         Data rawData = new Data(11);
         Data d = com.scottkrulcik.agnostic.DaggerMain_TestComponent.builder()
             .rawData(rawData)
@@ -62,10 +70,32 @@ public class Main {
             .data();
         System.out.println("data=" + d);
 
+
         System.out.println("----------------------------------------");
-        System.out.println("complete!!\n");
+        System.out.println("Map experiment");
+        Multimap<String, String> deps = ArrayListMultimap.create();
+        deps.put("A", "B");
+        deps.put("B", "C");
+        deps.put("C", "A");
+
+        MutableGraph<String> g = GraphBuilder.directed()
+            .allowsSelfLoops(true)
+            .build();
+        for (String key : deps.keySet()) {
+            Collection<String> dependencies = deps.get(key);
+            // TODO(skrulcik): Self-loop optimization
+            for (String dependency : dependencies) {
+                g.putEdge(key, dependency);
+            }
+        }
+
+        Graph<String> gTC = Graphs.transitiveClosure(g);
+        System.out.println(gTC);
+
 
         // Exit prevents production executors from running after main() returns
+        System.out.println("----------------------------------------");
+        System.out.println("complete!!\n");
         System.exit(0);
     }
 }
