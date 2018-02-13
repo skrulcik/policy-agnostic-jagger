@@ -86,7 +86,7 @@ public abstract class SampleData {
     public abstract SampleData withName(String name);
     public abstract SampleData withCreationDate(Date creationDate);
 
-    protected SampleData sanitized() {
+    protected SampleData sanitize() {
         SampleData sanitized = this;
         if (!isNameVisible()) {
             sanitized = this.withName(new DefaultName().call());
