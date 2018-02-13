@@ -1,8 +1,11 @@
-package com.scottkrulcik.agnostic;
+package com.scottkrulcik.agnostic.data;
 
 import com.google.auto.value.AutoValue;
+import com.scottkrulcik.agnostic.LabelDefinition;
+import com.scottkrulcik.agnostic.ViewingContext;
 import com.scottkrulcik.agnostic.annotations.Faceted;
 import com.scottkrulcik.agnostic.annotations.Restrict;
+import com.scottkrulcik.agnostic.annotations.Restriction;
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
@@ -19,7 +22,7 @@ import javax.inject.Qualifier;
  * Simple test class to test the {@link Faceted} annotation.
  */
 @AutoValue
-public abstract class SimpleData {
+public abstract class SampleData {
 
     public static final class DefaultName implements Callable<String> {
 
@@ -74,13 +77,34 @@ public abstract class SimpleData {
         }
     }
 
-    @Restrict(label = AlwaysYesLabel.class, defaultValue = DefaultName.class)
+    @Restrict(label = "name", defaultValue = DefaultName.class)
     public abstract String name();
 
-    @Restrict(label = AlwaysNoLabel.class, defaultValue = DefaultCreationDate.class)
+    @Restrict(label = "creationDate", defaultValue = DefaultCreationDate.class)
     public abstract Date creationDate();
 
-    public abstract SimpleData withName(String name);
-    public abstract SimpleData withCreationDate(Date creationDate);
+    public abstract SampleData withName(String name);
+    public abstract SampleData withCreationDate(Date creationDate);
+
+    protected SampleData sanitized() {
+        SampleData sanitized = this;
+        if (!isNameVisible()) {
+            sanitized = this.withName(new DefaultName().call());
+        }
+        if (!isCreationDateVisible()) {
+            sanitized = this.withCreationDate(new DefaultCreationDate().call());
+        }
+        return sanitized;
+    }
+
+    @Restriction("creationDate")
+    boolean isCreationDateVisible() {
+        return false;
+    }
+
+    @Restriction("name")
+    boolean isNameVisible() {
+        return true;
+    }
 
 }
