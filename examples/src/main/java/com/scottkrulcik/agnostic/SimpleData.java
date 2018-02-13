@@ -1,21 +1,27 @@
 package com.scottkrulcik.agnostic;
 
-import com.scottkrulcik.agnostic.LabelDefinition;
-import com.scottkrulcik.agnostic.ViewingContext;
+import com.google.auto.value.AutoValue;
 import com.scottkrulcik.agnostic.annotations.Faceted;
+import com.scottkrulcik.agnostic.annotations.Restrict;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 import java.time.Instant;
 import java.util.Collections;
 import java.util.Date;
 import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.function.Predicate;
+import javax.inject.Qualifier;
 
 /**
  * Simple test class to test the {@link Faceted} annotation.
  */
-public class SimpleData {
+@AutoValue
+public abstract class SimpleData {
 
-    static final class DefaultName implements Callable<String> {
+    public static final class DefaultName implements Callable<String> {
 
         @Override
         public String call() {
@@ -23,47 +29,58 @@ public class SimpleData {
         }
     }
 
-    static final class DefaultCreationDate implements Callable<Date> {
+    public static final class DefaultCreationDate implements Callable<Date> {
 
         @Override
-        public Date call() throws Exception {
+        public Date call() {
             return Date.from(Instant.EPOCH);
         }
     }
 
-    static final class AlwaysYesLabel extends LabelDefinition<ViewingContext> {
+    public static final class AlwaysYesLabel extends LabelDefinition<ViewingContext> {
+
+        @Target(ElementType.PARAMETER)
+        @Retention(RetentionPolicy.RUNTIME)
+        @Qualifier
+        public @interface Result { }
 
         @Override
         public Set<Predicate<ViewingContext>> restrictions() {
             return Collections.emptySet();
         }
+
+        @Override
+        public Set<Class<? extends LabelDefinition<?>>> dependencies() {
+            return Collections.emptySet();
+        }
     }
 
-    static final class AlwaysNoLabel extends LabelDefinition<ViewingContext> {
+
+    public static final class AlwaysNoLabel extends LabelDefinition<ViewingContext> {
+
+        @Target(ElementType.PARAMETER)
+        @Retention(RetentionPolicy.RUNTIME)
+        @Qualifier
+        public @interface Result { }
 
         @Override
         public Set<Predicate<ViewingContext>> restrictions() {
             return Collections.singleton(vc -> false);
         }
+
+        @Override
+        public Set<Class<? extends LabelDefinition<?>>> dependencies() {
+            return Collections.emptySet();
+        }
     }
 
-    private final String name;
-    private final Date creationDate;
+    @Restrict(label = AlwaysYesLabel.class, defaultValue = DefaultName.class)
+    public abstract String name();
 
-    public SimpleData() {
-        // TODO(skrulcik): Remove hard-coded name once constructors are implemented
-        this.name = "Scott";
-        this.creationDate = new Date();
-    }
+    @Restrict(label = AlwaysNoLabel.class, defaultValue = DefaultCreationDate.class)
+    public abstract Date creationDate();
 
-    @Faceted(label = AlwaysYesLabel.class, low = DefaultName.class)
-    public String getName() {
-        return name;
-    }
-
-    @Faceted(label = AlwaysNoLabel.class, low = DefaultCreationDate.class)
-    public Date getCreationDate() {
-        return creationDate;
-    }
+    public abstract SimpleData withName(String name);
+    public abstract SimpleData withCreationDate(Date creationDate);
 
 }
