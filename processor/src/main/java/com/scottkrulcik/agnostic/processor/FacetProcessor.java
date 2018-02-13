@@ -3,10 +3,11 @@ package com.scottkrulcik.agnostic.processor;
 import static com.scottkrulcik.agnostic.processor.AnnotationUtils.getAnnotationMirror;
 import static com.scottkrulcik.agnostic.processor.AnnotationUtils.getAnnotationValue;
 
-import com.google.auto.service.AutoService;
+import com.google.auto.value.AutoValue;
 import com.google.common.base.Preconditions;
 import com.scottkrulcik.agnostic.ViewingContext;
 import com.scottkrulcik.agnostic.annotations.Faceted;
+import com.scottkrulcik.agnostic.annotations.Restrict;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.FieldSpec;
 import com.squareup.javapoet.JavaFile;
@@ -14,6 +15,7 @@ import com.squareup.javapoet.MethodSpec;
 import com.squareup.javapoet.ParameterizedTypeName;
 import com.squareup.javapoet.TypeName;
 import com.squareup.javapoet.TypeSpec;
+import java.io.File;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.HashSet;
@@ -41,12 +43,15 @@ import javax.lang.model.util.Elements;
 import javax.lang.model.util.Types;
 import javax.tools.Diagnostic;
 import javax.tools.Diagnostic.Kind;
-
+import javax.tools.StandardLocation;
+import javax.tools.ToolProvider;
 
 /**
- * Creates a faceted version of classes annotated with {@link Faceted}.
+ * Creates a sanitizer module that provides a safe view of raw data objects.
+ *
+ * Any object with a
  */
-@AutoService(javax.annotation.processing.Processor.class)
+//@AutoService(javax.annotation.processing.Processor.class) TODO: Re-enable
 public class FacetProcessor extends AbstractProcessor {
 
     private Types typeUtils;
@@ -65,7 +70,7 @@ public class FacetProcessor extends AbstractProcessor {
 
     @Override
     public Set<String> getSupportedAnnotationTypes() {
-        return Collections.singleton(Faceted.class.getCanonicalName());
+        return Collections.singleton(Restrict.class.getCanonicalName());
     }
 
     @Override
@@ -74,11 +79,9 @@ public class FacetProcessor extends AbstractProcessor {
     }
 
     /**
-     * Return {@code true} if the given originalMethod can be processed. Even though methods are the level
-     * of annotation, we want to process their enclosing classes.
-     *
-     * Enclosing classes must not be final so they can be extended. TODO(skrulcik): Evaluate if
-     * inheritance is the right decision here
+     * Return {@code true} if the given element can be processed. Even though methods are the level
+     * of annotation, we want to process their enclosing classes, so we can generate the entire
+     * sanitizer at the same time.
      *
      * For simplicity, we are requiring that the annotations appear on methods of the top-level
      * class in a file (no nested or anonymous classes).
@@ -86,38 +89,56 @@ public class FacetProcessor extends AbstractProcessor {
      * TODO(skrulcik): Reduce Faceted restrictions, allow nested classes
      */
     private boolean isProcessableElement(Element element) {
+        System.out.println("processing " + element + " getAnnotation()=" + element.getAnnotation
+            (AutoValue.class));
+
+        Iterable<? extends File> fm = ToolProvider.getSystemJavaCompiler().getStandardFileManager
+            (null,
+            null, null).getLocation(StandardLocation.SOURCE_OUTPUT);
+        System.out.println("Source Path " + fm);
+        System.out.println("Source path " + javax.tools.StandardLocation.SOURCE_PATH);
         return element.getKind().isClass() &&
             ((TypeElement) typeUtils.asElement(element.asType())).getNestingKind().equals(
-                NestingKind.TOP_LEVEL) &&
-            !element.getModifiers().contains(Modifier.FINAL);
+                NestingKind.TOP_LEVEL);
+    }
+
+    /**
+     * Return {@code true} if the given class is annotated with {@link AutoValue}.
+     */
+    private boolean isAutoValueSpec(Element element) {
+        return element.getAnnotation(AutoValue.class) != null;
     }
 
 
     /**
      * Given a target class, return all of the {@link Faceted faceted} methods that it contains.
      */
-    private Set<FacetedMethod> getEnclosedFacetedMethods(Element targetClass) {
+    private Set<SanitizingMethod> getEnclosedFacetedMethods(Element targetClass) {
         Preconditions.checkArgument(isProcessableElement(targetClass));
 
         return targetClass.getEnclosedElements().stream().filter(e -> {
-            return e.getKind() == ElementKind.METHOD && e.getAnnotation(Faceted.class) != null;
-        }).map(e -> FacetedMethod.create((ExecutableElement) e))
+            return e.getKind() == ElementKind.METHOD && e.getAnnotation(Restrict.class) != null;
+        }).map(e -> SanitizingMethod.create((ExecutableElement) e))
             .filter(Objects::nonNull)
             .collect(Collectors.toSet());
     }
 
-    private static String facetedName(Element originalElement) {
-        return originalElement.getSimpleName() + "Faceted";
+    /**
+     * Creates the named used for a sanitizer class generated for the given element.
+     */
+    private static String sanitizerName(Element originalElement) {
+        return originalElement.getSimpleName() + "Sanitizer";
     }
 
     @Override
     public boolean process(Set<? extends TypeElement> set, RoundEnvironment roundEnvironment) {
+        System.err.println("processing over=" + roundEnvironment.processingOver());
 
         // First, iterate through all of the methods with the Faceted annotation and retrieve
         // their enclosing classes. We must operate on their parent classes because we can only
         // gneerate new classes, not just new methods.
         Set<Element> facetedClasses = new HashSet<>();
-        for (Element element : roundEnvironment.getElementsAnnotatedWith(Faceted.class)) {
+        for (Element element : roundEnvironment.getElementsAnnotatedWith(Restrict.class)) {
             if (element.getKind() != ElementKind.METHOD) {
                 messager
                     .printMessage(Diagnostic.Kind.ERROR, "Only methods can be faceted", element);
@@ -133,7 +154,13 @@ public class FacetProcessor extends AbstractProcessor {
                         enclosingClass, element), element);
                 return true;
             }
-            facetedClasses.add(enclosingClass);
+
+            // AutoValue implementations retain method annotations, so will be included in the
+            // list of elements annotated with Faceted, but we don't want to process them. We
+            // only process the top-level class.
+            if (isAutoValueSpec(enclosingClass)) {
+                facetedClasses.add(enclosingClass);
+            }
         }
 
         // Now actually go through the faceted classes, generating a faceted method for each
@@ -141,11 +168,10 @@ public class FacetProcessor extends AbstractProcessor {
         for (Element originalClass : facetedClasses) {
             System.out.println("Processing " + originalClass); // SCOTT DEBUG ONLY
 
-            TypeSpec.Builder faceted = TypeSpec.classBuilder(facetedName(originalClass))
-                .superclass(TypeName.get(originalClass.asType()))
+            TypeSpec.Builder faceted = TypeSpec.classBuilder(sanitizerName(originalClass))
                 .addModifiers(Modifier.PUBLIC, Modifier.FINAL);
 
-            for (FacetedMethod method : getEnclosedFacetedMethods(originalClass)) {
+            for (SanitizingMethod method : getEnclosedFacetedMethods(originalClass)) {
                 System.out.println(" +- " + method);
                 faceted.addField(method.labelField);
                 faceted.addField(method.lowField);
@@ -181,7 +207,7 @@ public class FacetProcessor extends AbstractProcessor {
      * TODO(skrulcik): Consider restructuring, possibly changing when specs and names are created
      * TOOD(skrulcik): Consider removing callable field and using method reference
      */
-    private static final class FacetedMethod {
+    private static final class SanitizingMethod {
         static final String CTX = "context";
 
         final ExecutableElement originalMethod;
@@ -190,7 +216,7 @@ public class FacetProcessor extends AbstractProcessor {
         final FieldSpec labelField;
         final FieldSpec lowField;
 
-        FacetedMethod(ExecutableElement element, TypeMirror label,
+        SanitizingMethod(ExecutableElement element, TypeMirror label,
             TypeMirror defaultValue, FieldSpec labelField, FieldSpec lowField) {
             this.originalMethod = element;
             this.labelClass = label;
@@ -199,9 +225,9 @@ public class FacetProcessor extends AbstractProcessor {
             this.lowField = lowField;
         }
 
-        static FacetedMethod create(ExecutableElement element) {
-            AnnotationMirror facetMirror = getAnnotationMirror(element, Faceted.class);
-            assert facetMirror != null : "Cannot create FacetedMethod from unannotated method";
+        static SanitizingMethod create(ExecutableElement element) {
+            AnnotationMirror facetMirror = getAnnotationMirror(element, Restrict.class);
+            assert facetMirror != null : "Cannot create SanitizingMethod from unannotated method";
             AnnotationValue label = getAnnotationValue(facetMirror, "label");
             AnnotationValue lowCallable = getAnnotationValue(facetMirror, "low");
             assert label != null && lowCallable != null :
@@ -219,7 +245,7 @@ public class FacetProcessor extends AbstractProcessor {
                 .initializer("new $T();", lowName)
                 .build();
 
-            return new FacetedMethod(element,
+            return new SanitizingMethod(element,
                 (TypeMirror) label.getValue(),
                 (TypeMirror) lowCallable.getValue(),
                 labelField,
@@ -227,11 +253,11 @@ public class FacetProcessor extends AbstractProcessor {
         }
 
         private static String labelFieldName(Element originalMethod) {
-            return facetedName(originalMethod) + "Label";
+            return sanitizerName(originalMethod) + "Label";
         }
 
         private static String lowFieldName(Element originalMethod) {
-            return facetedName(originalMethod) + "LowSecurity";
+            return sanitizerName(originalMethod) + "LowSecurity";
         }
 
         MethodSpec wrapperSpec(Types typeUtils) {
@@ -243,7 +269,7 @@ public class FacetProcessor extends AbstractProcessor {
             ClassName predicateName = ClassName.get(Predicate.class);
             TypeName predicateType = ParameterizedTypeName.get(predicateName, contextName);
 
-            return MethodSpec.methodBuilder(facetedName(originalMethod))
+            return MethodSpec.methodBuilder(sanitizerName(originalMethod))
                 .addModifiers(Modifier.PUBLIC, Modifier.FINAL)
                 .returns(TypeName.get(originalMethod.getReturnType()))
                 // TODO(skrulcik): Support more than // viewing context
@@ -262,7 +288,7 @@ public class FacetProcessor extends AbstractProcessor {
 
         @Override
         public String toString() {
-            return "FacetedMethod{" +
+            return "SanitizingMethod{" +
                 "originalMethod=" + originalMethod +
                 ", labelClass=" + labelClass +
                 ", lowClass=" + lowClass +
