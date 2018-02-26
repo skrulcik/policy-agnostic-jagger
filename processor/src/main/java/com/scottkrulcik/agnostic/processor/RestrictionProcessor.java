@@ -1,14 +1,11 @@
 package com.scottkrulcik.agnostic.processor;
 
-import static com.scottkrulcik.agnostic.processor.AnnotationUtils.getAnnotationMirror;
-import static com.scottkrulcik.agnostic.processor.AnnotationUtils.getAnnotationValue;
-import static javax.lang.model.element.ElementKind.METHOD;
-
 import com.google.auto.common.BasicAnnotationProcessor;
 import com.google.auto.service.AutoService;
 import com.google.common.base.Preconditions;
-import com.google.common.collect.HashMultimap;
 import com.google.common.collect.SetMultimap;
+import com.google.common.graph.GraphBuilder;
+import com.google.common.graph.MutableGraph;
 import com.scottkrulcik.agnostic.annotations.JaggerContext;
 import com.scottkrulcik.agnostic.annotations.Raw;
 import com.scottkrulcik.agnostic.annotations.Restrict;
@@ -22,21 +19,15 @@ import com.squareup.javapoet.TypeSpec;
 import dagger.BindsInstance;
 import dagger.Component;
 import dagger.Provides;
-import java.io.IOException;
-import java.lang.annotation.Annotation;
-import java.util.Collections;
-import java.util.EnumSet;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.stream.Collectors;
+
 import javax.annotation.processing.Filer;
 import javax.annotation.processing.Messager;
 import javax.annotation.processing.RoundEnvironment;
 import javax.annotation.processing.SupportedSourceVersion;
+import javax.inject.Qualifier;
 import javax.lang.model.SourceVersion;
 import javax.lang.model.element.AnnotationMirror;
+import javax.lang.model.element.AnnotationValue;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.ExecutableElement;
@@ -46,25 +37,32 @@ import javax.lang.model.element.TypeElement;
 import javax.lang.model.type.TypeMirror;
 import javax.lang.model.util.Types;
 import javax.tools.Diagnostic.Kind;
+import java.io.IOException;
+import java.lang.annotation.Annotation;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.EnumSet;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
+
+import static com.scottkrulcik.agnostic.processor.AnnotationUtils.getAnnotationMirror;
+import static com.scottkrulcik.agnostic.processor.AnnotationUtils.getAnnotationValue;
+import static javax.lang.model.element.ElementKind.METHOD;
 
 @SupportedSourceVersion(SourceVersion.RELEASE_8)
 @AutoService(javax.annotation.processing.Processor.class)
 public class RestrictionProcessor extends BasicAnnotationProcessor {
 
-    private static final String LABEL_FIELD = "label";
-
-    /**
-     * Holds the most recent type mirror for the given canonical type string. I observed that {@link
-     * TypeMirror}s are not equal across runs, even using the {@link com.google.auto.common
-     * .MoreTypes
-     * MoreTypes} equivalence. This is the best way I can think of to keep track of type mirrors
-     * without duplicating.
-     */
-    private final Map<String, TypeMirror> canonicalLabels = new HashMap<>();
     // TODO(skrulcik): Consider whether this should be maintained across runs
-    private final SetMultimap<String, String> labelDeps = HashMultimap.create();
+    private final Set<String> allLabels = new HashSet<>();
+    private final MutableGraph<String> labelDeps = GraphBuilder.directed().allowsSelfLoops(true).build();
 
     private final class CollectLabels implements ProcessingStep {
+
+        private static final String LABEL_FIELD = "label";
+        private static final String DEPENDENCIES_FIELD = "dependencies";
 
         @Override
         public Set<? extends Class<? extends Annotation>> annotations() {
@@ -75,11 +73,42 @@ public class RestrictionProcessor extends BasicAnnotationProcessor {
         public Set<? extends Element> process(
             SetMultimap<Class<? extends Annotation>, Element> elementsByAnnotation) {
             Set<Element> elements = elementsByAnnotation.get(Restrict.class);
+            assert elements.size() == elementsByAnnotation.size();
+            Set<Element> unprocessable = new HashSet<>();
+
             for (Element e : elements) {
                 AnnotationMirror restrictAnnotation = getAnnotationMirror(e, Restrict.class);
-                TypeMirror label = (TypeMirror) getAnnotationValue(restrictAnnotation,
-                    LABEL_FIELD).getValue();
-                canonicalLabels.put(label.toString(), label);
+                if (restrictAnnotation == null) {
+                    unprocessable.add(e);
+                    continue;
+                }
+                // Get the raw versions of annotation values, and check before casting
+                AnnotationValue rawLabel = getAnnotationValue(restrictAnnotation, LABEL_FIELD);
+                AnnotationValue rawDeps = getAnnotationValue(restrictAnnotation, DEPENDENCIES_FIELD);
+                if (rawLabel == null) {
+                    unprocessable.add(e);
+                    continue;
+                }
+
+                String label = (String) rawLabel.getValue();
+                allLabels.add(label);
+
+                // TODO(skrulcik): investigate why this is a NPE instead of proper default of {}
+                try {
+                    List<String> dependencies = AnnotationUtils.asList(rawDeps);
+                    for (String dep : dependencies) {
+                        labelDeps.addNode(dep);
+                        labelDeps.putEdge(label, dep);
+                    }
+                } catch (NullPointerException ignore) {
+                    // No dependencies, not a problem
+                }
+            }
+            // Do not return un-processable elements, because if they are not well-formed now, they
+            // won't be in the future
+            if (!unprocessable.isEmpty()) {
+                processingEnv.getMessager().printMessage(Kind.WARNING,
+                    "The following restricted fields were unprocessable: " + unprocessable);
             }
             return Collections.emptySet();
         }
@@ -136,6 +165,7 @@ public class RestrictionProcessor extends BasicAnnotationProcessor {
                 "Error writing to java file " + outputFile.typeSpec.name);
         }
     }
+
     private final class CreateSanitizerModules implements ProcessingStep {
 
         @Override
@@ -164,9 +194,30 @@ public class RestrictionProcessor extends BasicAnnotationProcessor {
                         .addAnnotation(Raw.class)
                         .build();
 
-                    sanitizerModule.addMethod(MethodSpec.methodBuilder(methodName)
+                    MethodSpec.Builder sanitizeMethod = MethodSpec.methodBuilder(methodName)
                         .addAnnotation(Provides.class)
-                        .addParameter(providerParam)
+                        .addParameter(providerParam);
+                    for (String dep : allLabels) {
+                        TypeSpec qualifier = TypeSpec.annotationBuilder("Qualify" + dep)
+                            .addAnnotation(Qualifier.class)
+                            .build();
+                        ClassName qualifierName = ClassName.get(getEnclosingPackage(originalClass).getQualifiedName().toString(),
+                            sanitizerName(originalClass), "Qualify" + dep);
+                        sanitizerModule.addType(qualifier);
+
+                        ParameterSpec labelParam = ParameterSpec.builder(TypeName.BOOLEAN, dep)
+                            .addAnnotation(qualifierName)
+                            .build();
+                        sanitizeMethod.addParameter(labelParam);
+
+                        sanitizerModule.addMethod(MethodSpec.methodBuilder("provides" + dep)
+                            .addAnnotation(Provides.class)
+                            .addAnnotation(qualifierName)
+                            .returns(TypeName.BOOLEAN)
+                            .addStatement("return false")
+                            .build());
+                    }
+                    sanitizerModule.addMethod(sanitizeMethod
                         .addStatement("return $N.sanitize()", providerParam)
                         .returns(paramType)
                         .build());
@@ -257,7 +308,7 @@ public class RestrictionProcessor extends BasicAnnotationProcessor {
 
     @Override
     protected Iterable<? extends ProcessingStep> initSteps() {
-        return Collections.singletonList(new CreateSanitizerModules());
+        return Arrays.asList(new CollectLabels(), new CreateSanitizerModules());
     }
 
     @Override
@@ -265,7 +316,9 @@ public class RestrictionProcessor extends BasicAnnotationProcessor {
         super.postRound(roundEnv);
         if (roundEnv.processingOver()) {
             processingEnv.getMessager().printMessage(Kind.NOTE,
-                "Canonical Labels: " + canonicalLabels);
+                "Labels: " + allLabels);
+            processingEnv.getMessager().printMessage(Kind.NOTE,
+                "Label Dependencies: " + labelDeps);
         }
     }
 
