@@ -1,11 +1,16 @@
 package com.scottkrulcik.agnostic.processor;
 
-import java.util.Map;
+import com.google.common.base.Preconditions;
+import com.sun.tools.javac.code.Attribute;
+
 import javax.annotation.Nullable;
 import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.element.AnnotationValue;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ExecutableElement;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 
 /**
  * Common utilities for processing annotations.
@@ -36,6 +41,17 @@ final class AnnotationUtils {
          }
       }
       return null;
+   }
+
+   static <T> List<T> asList(AnnotationValue annotationValue) {
+       Preconditions.checkNotNull(annotationValue);
+       Preconditions.checkArgument(annotationValue.getValue() instanceof List);
+       List<Attribute.Constant> annotationConstants = (List<Attribute.Constant>) annotationValue.getValue();
+       List<T> list = new ArrayList<>(annotationConstants.size());
+       for (Attribute.Constant constant : annotationConstants) {
+           list.add((T) constant.value);
+       }
+       return list;
    }
 
    private AnnotationUtils() {}
