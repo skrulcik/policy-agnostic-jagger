@@ -1,8 +1,5 @@
 package com.scottkrulcik.agnostic.processor;
 
-import static com.scottkrulcik.agnostic.processor.AnnotationUtils.getAnnotationMirror;
-import static com.scottkrulcik.agnostic.processor.AnnotationUtils.getAnnotationValue;
-
 import com.google.auto.value.AutoValue;
 import com.google.common.base.Preconditions;
 import com.scottkrulcik.agnostic.ViewingContext;
@@ -15,14 +12,7 @@ import com.squareup.javapoet.MethodSpec;
 import com.squareup.javapoet.ParameterizedTypeName;
 import com.squareup.javapoet.TypeName;
 import com.squareup.javapoet.TypeSpec;
-import java.io.File;
-import java.io.IOException;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Objects;
-import java.util.Set;
-import java.util.function.Predicate;
-import java.util.stream.Collectors;
+
 import javax.annotation.processing.AbstractProcessor;
 import javax.annotation.processing.Filer;
 import javax.annotation.processing.Messager;
@@ -45,6 +35,17 @@ import javax.tools.Diagnostic;
 import javax.tools.Diagnostic.Kind;
 import javax.tools.StandardLocation;
 import javax.tools.ToolProvider;
+import java.io.File;
+import java.io.IOException;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Objects;
+import java.util.Set;
+import java.util.function.Predicate;
+import java.util.stream.Collectors;
+
+import static com.google.auto.common.AnnotationMirrors.getAnnotationValue;
+import static com.scottkrulcik.agnostic.processor.AnnotationUtils.getAnnotationMirror;
 
 /**
  * Creates a sanitizer module that provides a safe view of raw data objects.
