@@ -1,4 +1,4 @@
-package com.scottkrulcik.agnostic.examples.coursemanager.model;
+package com.scottkrulcik.agnostic.examples;
 
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;

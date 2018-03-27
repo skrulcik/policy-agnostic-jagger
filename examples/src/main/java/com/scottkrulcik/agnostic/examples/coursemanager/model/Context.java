@@ -1,5 +1,7 @@
 package com.scottkrulcik.agnostic.examples.coursemanager.model;
 
+import com.scottkrulcik.agnostic.examples.DataStore;
+
 import java.util.Optional;
 
 /**

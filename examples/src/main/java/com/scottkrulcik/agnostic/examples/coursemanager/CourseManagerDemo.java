@@ -2,9 +2,9 @@ package com.scottkrulcik.agnostic.examples.coursemanager;
 
 import com.google.common.util.concurrent.ListenableFuture;
 import com.scottkrulcik.agnostic.ProductionExecutorModule;
+import com.scottkrulcik.agnostic.examples.DataStore;
 import com.scottkrulcik.agnostic.examples.coursemanager.model.Assignment;
 import com.scottkrulcik.agnostic.examples.coursemanager.model.Context;
-import com.scottkrulcik.agnostic.examples.coursemanager.model.DataStore;
 import com.scottkrulcik.agnostic.examples.coursemanager.model.Student;
 import com.scottkrulcik.agnostic.examples.coursemanager.model.Submission;
 import com.scottkrulcik.agnostic.examples.coursemanager.model.Teacher;
@@ -12,6 +12,7 @@ import com.scottkrulcik.agnostic.examples.coursemanager.view.AssignmentResultsVi
 import dagger.Module;
 import dagger.Provides;
 import dagger.producers.ProductionComponent;
+
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
 
