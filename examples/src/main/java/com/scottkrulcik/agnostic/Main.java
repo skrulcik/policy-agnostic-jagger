@@ -9,6 +9,7 @@ import com.google.common.graph.MutableGraph;
 import com.scottkrulcik.agnostic.annotations.Raw;
 import com.scottkrulcik.agnostic.examples.guests.GuestListDemo;
 import com.scottkrulcik.agnostic.examples.history.SearchHistoryDemo;
+import com.scottkrulcik.agnostic.examples.medical.MedicalExample;
 import dagger.BindsInstance;
 import dagger.Component;
 import dagger.Module;
@@ -60,6 +61,10 @@ public class Main {
         System.out.println("----------------------------------------");
         System.out.println("Guest list demo");
         GuestListDemo.main(new String[0]);
+
+        System.out.println("----------------------------------------");
+        System.out.println("Medical records demo");
+        MedicalExample.main(new String[0]);
 
         System.out.println("----------------------------------------");
         System.out.println("Data Filter demo");
