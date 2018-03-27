@@ -23,6 +23,7 @@ subprojects {
     dependencies {
         implementation 'com.google.guava:guava:22.0'
         testCompile "junit:junit:4.12"
+        testCompile 'org.hamcrest:hamcrest-library:1.3'
     }
 
 }
