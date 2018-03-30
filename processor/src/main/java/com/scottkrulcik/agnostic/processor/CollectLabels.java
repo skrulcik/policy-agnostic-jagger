@@ -7,10 +7,10 @@ import com.google.common.collect.SetMultimap;
 import com.google.common.graph.GraphBuilder;
 import com.google.common.graph.ImmutableGraph;
 import com.google.common.graph.MutableGraph;
+import com.scottkrulcik.agnostic.annotations.Default;
 import com.scottkrulcik.agnostic.annotations.Restrict;
 import com.scottkrulcik.agnostic.annotations.Restriction;
 
-import javax.annotation.Nullable;
 import javax.annotation.processing.ProcessingEnvironment;
 import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.element.AnnotationValue;
@@ -42,7 +42,7 @@ final class CollectLabels implements BasicAnnotationProcessor.ProcessingStep {
     private static final String LABEL_FIELD = "label";
     private static final String DEPENDENCIES_FIELD = "dependencies";
     // TODO(skrulcik): make annotation field name consistent
-    private static final String PREDICATE_LABEL_FIELD = "value";
+    private static final String VALUE_LABEL_FIELD = "value";
 
     CollectLabels(ProcessingEnvironment processingEnv) {
         this.processingEnv = processingEnv;
@@ -50,7 +50,7 @@ final class CollectLabels implements BasicAnnotationProcessor.ProcessingStep {
 
     @Override
     public Set<? extends Class<? extends Annotation>> annotations() {
-        return ImmutableSet.of(Restrict.class, Restriction.class);
+        return ImmutableSet.of(Restrict.class, Restriction.class, Default.class);
     }
 
     @Override
@@ -85,7 +85,6 @@ final class CollectLabels implements BasicAnnotationProcessor.ProcessingStep {
                 policyRules.put(label, PolicyRule.builder(label).setAccessor(accessor));
             }
 
-
             // TODO(skrulcik): investigate why this is a NPE instead of proper default of {}
             try {
                 List<String> dependencies = AnnotationUtils.asList(rawDeps);
@@ -106,17 +105,35 @@ final class CollectLabels implements BasicAnnotationProcessor.ProcessingStep {
                 continue;
             }
             // Get the raw versions of annotation values, and check before casting
-            AnnotationValue rawLabel = getAnnotationValue(restrictionAnnotation, PREDICATE_LABEL_FIELD);
+            AnnotationValue rawLabel = getAnnotationValue(restrictionAnnotation, VALUE_LABEL_FIELD);
             String label = (String) rawLabel.getValue();
             PolicyRule.Builder rule = policyRules.get(label);
             if (rule == null) {
                 processingEnv.getMessager().printMessage(Diagnostic.Kind.WARNING,
                     "Restriction label " + label + " does not guard any fields.");
             } else {
-                checkState(predicate.getKind().equals(ElementKind.METHOD),
-                    "Restrictions can only apply to methods",
-                    processingEnv);
                 rule.setPredicate(predicate);
+            }
+        }
+
+        for (Element field : elementsByAnnotation.get(Default.class)) {
+            checkState(isDefaultValid(field),
+                "@Default only applies to public static fields. Not " + field.getSimpleName(),
+                processingEnv);
+            AnnotationMirror restrictionAnnotation = getAnnotationMirror(field, Default.class);
+            if (restrictionAnnotation == null) {
+                unprocessable.add(field);
+                continue;
+            }
+            // Get the raw versions of annotation values, and check before casting
+            AnnotationValue rawLabel = getAnnotationValue(restrictionAnnotation, VALUE_LABEL_FIELD);
+            String label = (String) rawLabel.getValue();
+            PolicyRule.Builder rule = policyRules.get(label);
+            if (rule == null) {
+                processingEnv.getMessager().printMessage(Diagnostic.Kind.WARNING,
+                    "Default value for \"" + label + "\" does not have a corresponding field.");
+            } else {
+                rule.setSafeDefault(field);
             }
         }
 
@@ -177,12 +194,21 @@ final class CollectLabels implements BasicAnnotationProcessor.ProcessingStep {
     }
 
     /**
-     * Validates that {@link Restriction} is only applied to public, static methods.
+     * Validates that {@link Restriction} is only applied to public, non-static methods.
      */
     private static boolean isRestrictionValid(Element e) {
         return e.getKind().equals(ElementKind.METHOD)
             && e.getModifiers().contains(Modifier.PUBLIC)
             && !e.getModifiers().contains(Modifier.STATIC);
+    }
+
+    /**
+     * Checks that {@link Default} is only applied to public, static fields.
+     */
+    private static boolean isDefaultValid(Element e) {
+        return e.getKind().equals(ElementKind.FIELD)
+            && e.getModifiers().contains(Modifier.PUBLIC)
+            && e.getModifiers().contains(Modifier.STATIC);
     }
 
 
@@ -194,8 +220,6 @@ final class CollectLabels implements BasicAnnotationProcessor.ProcessingStep {
 
         abstract Element predicate();
 
-        // TODO(skrulcik): remove nullable once safe defaults are re-implemented using annotations
-        @Nullable
         abstract Element safeDefault();
 
         static Builder builder(String label) {
