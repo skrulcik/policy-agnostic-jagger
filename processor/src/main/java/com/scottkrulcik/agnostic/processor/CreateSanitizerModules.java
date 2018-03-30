@@ -29,6 +29,8 @@ import java.util.Collections;
 import java.util.Set;
 import java.util.function.Consumer;
 
+import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Strings.isNullOrEmpty;
 import static com.scottkrulcik.agnostic.processor.AnnotationUtils.getEnclosingPackage;
 import static com.scottkrulcik.agnostic.processor.AnnotationUtils.instanceMethods;
 import static com.scottkrulcik.agnostic.processor.Naming.contextComponentName;
@@ -51,6 +53,15 @@ final class CreateSanitizerModules implements BasicAnnotationProcessor.Processin
     @Override
     public Set<? extends Class<? extends Annotation>> annotations() {
         return Collections.singleton(JaggerContext.class);
+    }
+
+    /**
+     * Returns the name of a qualifier used as to specify the result of a predicate.
+     */
+    private static String qualifierName(String predicateLabel) {
+        checkArgument(!isNullOrEmpty(predicateLabel), "Predicate labels must not be null or empty");
+        predicateLabel = predicateLabel.substring(0, 1).toUpperCase() + predicateLabel.substring(1);
+        return "ResultOf" + predicateLabel;
     }
 
     private void createSanitizerModule(Filer filer, Messager messager, Element originalClass) {
@@ -78,11 +89,11 @@ final class CreateSanitizerModules implements BasicAnnotationProcessor.Processin
                     .addAnnotation(Provides.class)
                     .addParameter(providerParam);
                 for (String dep : collectLabels.getAllLabels()) {
-                    TypeSpec qualifier = TypeSpec.annotationBuilder("Qualify" + dep)
+                    TypeSpec qualifier = TypeSpec.annotationBuilder(qualifierName(dep))
                         .addAnnotation(Qualifier.class)
                         .build();
                     ClassName qualifierName = ClassName.get(getEnclosingPackage(originalClass).getQualifiedName().toString(),
-                        sanitizerName(originalClass), "Qualify" + dep);
+                        sanitizerName(originalClass), qualifierName(dep));
                     sanitizerModule.addType(qualifier);
 
                     ParameterSpec labelParam = ParameterSpec.builder(TypeName.BOOLEAN, dep)
