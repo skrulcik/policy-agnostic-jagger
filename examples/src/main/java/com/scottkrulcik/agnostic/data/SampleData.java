@@ -1,20 +1,24 @@
 package com.scottkrulcik.agnostic.data;
 
 import com.google.auto.value.AutoValue;
+import com.scottkrulcik.agnostic.annotations.Default;
 import com.scottkrulcik.agnostic.annotations.Restrict;
 import com.scottkrulcik.agnostic.annotations.Restriction;
 
 import java.time.Instant;
 import java.util.Date;
-import java.util.concurrent.Callable;
 
 /**
  * Simple test class to test the {@link Restrict} and {@link Restriction} annotations.
  */
 @AutoValue
 public abstract class SampleData {
+    @Default("name")
+    public static final String ANONYMOUS = "Anonymous";
+    @Default("creationDate")
+    public static final Date DEFAULT_DATE = Date.from(Instant.EPOCH);
 
-    @Restrict(label = "creationDate", defaultValue = DefaultCreationDate.class)
+    @Restrict(label = "creationDate")
     public abstract Date creationDate();
 
     @Restriction("creationDate")
@@ -22,7 +26,7 @@ public abstract class SampleData {
         return false;
     }
 
-    @Restrict(label = "name", defaultValue = DefaultName.class, dependencies = {"creationDate"})
+    @Restrict(label = "name", dependencies = {"creationDate"})
     public abstract String name();
 
     @Restriction("name")
@@ -38,28 +42,12 @@ public abstract class SampleData {
     protected SampleData sanitize() {
         SampleData sanitized = this;
         if (!isNameVisible()) {
-            sanitized = this.withName(new DefaultName().call());
+            sanitized = this.withName(ANONYMOUS);
         }
         if (!isCreationDateVisible()) {
-            sanitized = this.withCreationDate(new DefaultCreationDate().call());
+            sanitized = this.withCreationDate(DEFAULT_DATE);
         }
         return sanitized;
-    }
-
-    public static final class DefaultName implements Callable<String> {
-
-        @Override
-        public String call() {
-            return "Anonymous";
-        }
-    }
-
-    public static final class DefaultCreationDate implements Callable<Date> {
-
-        @Override
-        public Date call() {
-            return Date.from(Instant.EPOCH);
-        }
     }
 
 }

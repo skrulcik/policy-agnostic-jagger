@@ -1,12 +1,13 @@
 package com.scottkrulcik.agnostic.annotations;
 
-import static java.lang.annotation.ElementType.METHOD;
-import static java.lang.annotation.RetentionPolicy.RUNTIME;
-
 import com.scottkrulcik.agnostic.LabelDefinition;
+
 import java.lang.annotation.Retention;
 import java.lang.annotation.Target;
 import java.util.concurrent.Callable;
+
+import static java.lang.annotation.ElementType.METHOD;
+import static java.lang.annotation.RetentionPolicy.RUNTIME;
 
 /**
  * Annotates {@link com.google.auto.value.AutoValue AutoValue} methods that should be restricted
@@ -31,12 +32,4 @@ public @interface Restrict {
      * B is used by label A.
      */
     String[] dependencies() default {};
-
-    /**
-     * A function that produces the default value for this class.
-     *
-     * It is assumed that the callable will always return the same instance. If parameter could
-     * be an instance it would be, but {@link Callable} is just a workaround.
-     */
-    Class<? extends Callable<?>> defaultValue();
 }
