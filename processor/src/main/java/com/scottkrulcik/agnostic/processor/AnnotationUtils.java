@@ -4,6 +4,7 @@ import com.google.common.base.Preconditions;
 import com.sun.tools.javac.code.Attribute;
 
 import javax.annotation.Nullable;
+import javax.annotation.processing.ProcessingEnvironment;
 import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.element.AnnotationValue;
 import javax.lang.model.element.Element;
@@ -13,6 +14,7 @@ import javax.lang.model.element.PackageElement;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.type.TypeMirror;
 import javax.lang.model.util.Types;
+import javax.tools.Diagnostic;
 import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.List;
@@ -31,6 +33,22 @@ final class AnnotationUtils {
 
     static final EnumSet<ElementKind> CLASS_LIKE_ELEMENT_KINDS =
         EnumSet.of(ElementKind.CLASS, ElementKind.INTERFACE);
+
+    /**
+     * Like {@link com.google.common.base.Preconditions#checkState(boolean)} except it writes to the
+     * {@link javax.annotation.processing.Messager} instead of throwing an exception.
+     *
+     * @param expression boolean expression to evaluate
+     * @param errorMessage message describing why the failure of {@code expression} is a problem
+     * @param processingEnv current annotation processing environment, used to get {@link
+     * javax.annotation.processing.Messager messager}
+     */
+    public static void checkState(boolean expression, @Nullable Object errorMessage,
+                                  ProcessingEnvironment processingEnv) {
+        if (!expression) {
+            processingEnv.getMessager().printMessage(Diagnostic.Kind.ERROR, String.valueOf(errorMessage));
+        }
+    }
 
     @Nullable
     static AnnotationMirror getAnnotationMirror(Element typeElement, Class<?> clazz) {
