@@ -16,6 +16,8 @@ import java.util.Arrays;
 
 import static com.google.common.base.Preconditions.checkState;
 
+// TODO(skrulcik): Is it possible to use regular exceptions for intermediate steps, and
+// report all exceptions in the top-level processor?
 @SupportedSourceVersion(SourceVersion.RELEASE_8)
 @AutoService(javax.annotation.processing.Processor.class)
 public class RestrictionProcessor extends BasicAnnotationProcessor {
@@ -23,9 +25,9 @@ public class RestrictionProcessor extends BasicAnnotationProcessor {
     // Delay initialization until initSteps, where processingEnv will be initialized
     private CollectLabels collectLabels;
     private CreateSanitizerModules createSanitizerModules;
-
-
+    // Field to verify expected state conditions regarding the processing environment
     private ProcessingEnvironment env1;
+
     @Override
     protected Iterable<? extends ProcessingStep> initSteps() {
         checkState(collectLabels == null && createSanitizerModules == null, "processing steps should not be initialized before initSteps");
@@ -49,6 +51,8 @@ public class RestrictionProcessor extends BasicAnnotationProcessor {
                 "Labels: " + collectLabels.getAllLabels());
             processingEnv.getMessager().printMessage(Kind.NOTE,
                 "Label Dependencies: " + collectLabels.getLabelDeps());
+            processingEnv.getMessager().printMessage(Kind.NOTE,
+                "Policy Dependencies: " + collectLabels.getPolicyRules());
         }
     }
 

@@ -18,7 +18,7 @@ public abstract class SampleData {
     public abstract Date creationDate();
 
     @Restriction("creationDate")
-    boolean isCreationDateVisible() {
+    public boolean isCreationDateVisible() {
         return false;
     }
 
@@ -26,7 +26,7 @@ public abstract class SampleData {
     public abstract String name();
 
     @Restriction("name")
-    boolean isNameVisible() {
+    public boolean isNameVisible() {
         return true;
     }
 
