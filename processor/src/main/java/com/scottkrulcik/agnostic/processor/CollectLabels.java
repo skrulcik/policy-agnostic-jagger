@@ -199,6 +199,7 @@ final class CollectLabels implements BasicAnnotationProcessor.ProcessingStep {
     private static boolean isRestrictionValid(Element e) {
         return e.getKind().equals(ElementKind.METHOD)
             && e.getModifiers().contains(Modifier.PUBLIC)
+            && e.getModifiers().contains(Modifier.FINAL)
             && !e.getModifiers().contains(Modifier.STATIC);
     }
 
@@ -208,6 +209,7 @@ final class CollectLabels implements BasicAnnotationProcessor.ProcessingStep {
     private static boolean isDefaultValid(Element e) {
         return e.getKind().equals(ElementKind.FIELD)
             && e.getModifiers().contains(Modifier.PUBLIC)
+            && e.getModifiers().contains(Modifier.FINAL)
             && e.getModifiers().contains(Modifier.STATIC);
     }
 

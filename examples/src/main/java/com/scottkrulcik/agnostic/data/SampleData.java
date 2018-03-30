@@ -22,7 +22,7 @@ public abstract class SampleData {
     public abstract Date creationDate();
 
     @Restriction("creationDate")
-    public boolean isCreationDateVisible() {
+    public final boolean isCreationDateVisible() {
         return false;
     }
 
@@ -30,7 +30,7 @@ public abstract class SampleData {
     public abstract String name();
 
     @Restriction("name")
-    public boolean isNameVisible() {
+    public final boolean isNameVisible() {
         return true;
     }
 
