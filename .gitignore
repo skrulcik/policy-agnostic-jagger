@@ -18,6 +18,7 @@ bin/
 build/
 generated/
 generated_src/
+generated_testSrc/
 out/
 ctags
 .gradle
