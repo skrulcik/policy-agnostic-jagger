@@ -1,6 +1,5 @@
 package com.scottkrulcik.agnostic.processor;
 
-import javax.annotation.Nullable;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.Modifier;
@@ -28,8 +27,7 @@ final class PolicyRule {
         String label,
         Element accessor,
         Element predicate,
-        // TODO(skrulcik): remove nullable once safe defaults are re-implemented using annotations
-        @Nullable Element safeDefault) {
+        Element safeDefault) {
         this.label = label;
         this.accessor = accessor;
         this.predicate = predicate;
@@ -48,7 +46,6 @@ final class PolicyRule {
         return predicate;
     }
 
-    @Nullable
     Element safeDefault() {
         return safeDefault;
     }
@@ -73,7 +70,7 @@ final class PolicyRule {
             return (this.label.equals(that.label()))
                 && (this.accessor.equals(that.accessor()))
                 && (this.predicate.equals(that.predicate()))
-                && ((this.safeDefault == null) ? (that.safeDefault() == null) : this.safeDefault.equals(that.safeDefault()));
+                && (this.safeDefault.equals(that.safeDefault()));
         }
         return false;
     }
@@ -88,7 +85,7 @@ final class PolicyRule {
         h *= 1000003;
         h ^= this.predicate.hashCode();
         h *= 1000003;
-        h ^= (safeDefault == null) ? 0 : this.safeDefault.hashCode();
+        h ^= this.safeDefault.hashCode();
         return h;
     }
 
@@ -122,7 +119,10 @@ final class PolicyRule {
             return this;
         }
 
-        PolicyRule.Builder setSafeDefault(@Nullable Element safeDefault) {
+        PolicyRule.Builder setSafeDefault(Element safeDefault) {
+            if (safeDefault == null) {
+                throw new NullPointerException("Null safe default");
+            }
             this.safeDefault = safeDefault;
             return this;
         }
@@ -137,6 +137,9 @@ final class PolicyRule {
             }
             if (this.predicate == null) {
                 missing += " predicate";
+            }
+            if (this.safeDefault == null) {
+                missing += " safeDefault";
             }
             if (!missing.isEmpty()) {
                 throw new IllegalStateException("Missing required properties:" + missing);
@@ -156,11 +159,8 @@ final class PolicyRule {
             checkState(accessor.getModifiers().contains(Modifier.ABSTRACT));
             checkState(predicate.getModifiers().containsAll(asList(Modifier.FINAL, Modifier.PUBLIC)));
 
-            // TODO(skrulcik): remove nullable once safe defaults are re-implemented using annotations
-            if (safeDefault != null) {
-                checkState(safeDefault.getKind().equals(ElementKind.FIELD));
-                checkState(safeDefault.getModifiers().containsAll(asList(Modifier.FINAL, Modifier.STATIC)));
-            }
+            checkState(safeDefault.getKind().equals(ElementKind.FIELD));
+            checkState(safeDefault.getModifiers().containsAll(asList(Modifier.FINAL, Modifier.STATIC)));
         }
 
         @Override
