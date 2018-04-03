@@ -5,6 +5,7 @@ import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.Modifier;
 
 import static com.google.common.base.Preconditions.checkState;
+import static com.scottkrulcik.agnostic.processor.Validation.isValidDefault;
 import static java.util.Arrays.asList;
 
 /**
@@ -154,13 +155,15 @@ final class PolicyRule {
 
         void validateElements() {
             checkState(accessor.getKind().equals(ElementKind.METHOD));
-            checkState(predicate.getKind().equals(ElementKind.METHOD));
-
             checkState(accessor.getModifiers().contains(Modifier.ABSTRACT));
+
+            checkState(predicate.getKind().equals(ElementKind.METHOD));
             checkState(predicate.getModifiers().containsAll(asList(Modifier.FINAL, Modifier.PUBLIC)));
 
             checkState(safeDefault.getKind().equals(ElementKind.FIELD));
             checkState(safeDefault.getModifiers().containsAll(asList(Modifier.FINAL, Modifier.STATIC)));
+
+            checkState(isValidDefault(accessor, safeDefault));
         }
 
         @Override

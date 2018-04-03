@@ -6,16 +6,14 @@ import com.google.common.collect.SetMultimap;
 import com.google.common.graph.GraphBuilder;
 import com.google.common.graph.ImmutableGraph;
 import com.google.common.graph.MutableGraph;
-import com.scottkrulcik.agnostic.annotations.SafeDefault;
 import com.scottkrulcik.agnostic.annotations.Restrict;
 import com.scottkrulcik.agnostic.annotations.Restriction;
+import com.scottkrulcik.agnostic.annotations.SafeDefault;
 
 import javax.annotation.processing.ProcessingEnvironment;
 import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.element.AnnotationValue;
 import javax.lang.model.element.Element;
-import javax.lang.model.element.ElementKind;
-import javax.lang.model.element.Modifier;
 import javax.tools.Diagnostic;
 import java.lang.annotation.Annotation;
 import java.util.Collections;
@@ -28,6 +26,10 @@ import java.util.Set;
 import static com.google.auto.common.AnnotationMirrors.getAnnotationValue;
 import static com.scottkrulcik.agnostic.processor.AnnotationUtils.checkState;
 import static com.scottkrulcik.agnostic.processor.AnnotationUtils.getAnnotationMirror;
+import static com.scottkrulcik.agnostic.processor.Naming.DEPENDENCIES_FIELD;
+import static com.scottkrulcik.agnostic.processor.Naming.LABEL_FIELD;
+import static com.scottkrulcik.agnostic.processor.Validation.isDefaultValid;
+import static com.scottkrulcik.agnostic.processor.Validation.isRestrictionValid;
 
 final class CollectLabels implements BasicAnnotationProcessor.ProcessingStep {
 
@@ -37,9 +39,6 @@ final class CollectLabels implements BasicAnnotationProcessor.ProcessingStep {
     private final Map<String, PolicyRule.Builder> policyRules = new HashMap<>();
 
     private final ProcessingEnvironment processingEnv;
-
-    private static final String LABEL_FIELD = "value";
-    private static final String DEPENDENCIES_FIELD = "dependencies";
 
     CollectLabels(ProcessingEnvironment processingEnv) {
         this.processingEnv = processingEnv;
@@ -190,25 +189,5 @@ final class CollectLabels implements BasicAnnotationProcessor.ProcessingStep {
         return ImmutableGraph.copyOf(policyDeps);
     }
 
-    /**
-     * Validates that {@link Restriction} is only applied to public, non-static methods.
-     */
-    private static boolean isRestrictionValid(Element e) {
-        return e.getKind().equals(ElementKind.METHOD)
-            && e.getModifiers().contains(Modifier.PUBLIC)
-            && e.getModifiers().contains(Modifier.FINAL)
-            && !e.getModifiers().contains(Modifier.STATIC);
-    }
-
-    /**
-     * Checks that {@link SafeDefault} is only applied to public, static fields.
-     */
-    private static boolean isDefaultValid(Element e) {
-        return e.getKind().equals(ElementKind.FIELD)
-            && e.getModifiers().contains(Modifier.PUBLIC)
-            && e.getModifiers().contains(Modifier.FINAL)
-            && e.getModifiers().contains(Modifier.STATIC);
-    }
 }
-
 

@@ -10,6 +10,9 @@ import static javax.lang.model.element.ElementKind.METHOD;
 
 final class Naming {
 
+    static final String LABEL_FIELD = "value";
+    static final String DEPENDENCIES_FIELD = "dependencies";
+
     static String sanitizerName(Element originalClass) {
         Preconditions.checkArgument(CLASS_LIKE_ELEMENT_KINDS.contains(originalClass.getKind()));
         return originalClass.getSimpleName() + "SanitizerModule";
