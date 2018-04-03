@@ -1,7 +1,6 @@
 package com.scottkrulcik.agnostic.processor;
 
 import com.google.auto.common.BasicAnnotationProcessor;
-import com.google.auto.value.AutoValue;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.SetMultimap;
 import com.google.common.graph.GraphBuilder;
@@ -210,37 +209,6 @@ final class CollectLabels implements BasicAnnotationProcessor.ProcessingStep {
             && e.getModifiers().contains(Modifier.FINAL)
             && e.getModifiers().contains(Modifier.STATIC);
     }
-
-
-    @AutoValue
-    static abstract class PolicyRule {
-        abstract String label();
-
-        abstract Element accessor();
-
-        abstract Element predicate();
-
-        abstract Element safeDefault();
-
-        static Builder builder(String label) {
-            return new AutoValue_CollectLabels_PolicyRule.Builder().setLabel(label);
-        }
-
-        @AutoValue.Builder
-        static abstract class Builder {
-            abstract Builder setLabel(String label);
-
-            abstract Builder setAccessor(Element accessor);
-
-            abstract Builder setPredicate(Element predicate);
-
-            abstract Builder setSafeDefault(Element safeDefault);
-
-            abstract PolicyRule build();
-        }
-
-    }
-
 }
 
 
