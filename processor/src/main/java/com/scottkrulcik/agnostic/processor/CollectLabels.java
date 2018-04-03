@@ -7,7 +7,7 @@ import com.google.common.collect.SetMultimap;
 import com.google.common.graph.GraphBuilder;
 import com.google.common.graph.ImmutableGraph;
 import com.google.common.graph.MutableGraph;
-import com.scottkrulcik.agnostic.annotations.Default;
+import com.scottkrulcik.agnostic.annotations.SafeDefault;
 import com.scottkrulcik.agnostic.annotations.Restrict;
 import com.scottkrulcik.agnostic.annotations.Restriction;
 
@@ -48,7 +48,7 @@ final class CollectLabels implements BasicAnnotationProcessor.ProcessingStep {
 
     @Override
     public Set<? extends Class<? extends Annotation>> annotations() {
-        return ImmutableSet.of(Restrict.class, Restriction.class, Default.class);
+        return ImmutableSet.of(Restrict.class, Restriction.class, SafeDefault.class);
     }
 
     @Override
@@ -114,11 +114,11 @@ final class CollectLabels implements BasicAnnotationProcessor.ProcessingStep {
             }
         }
 
-        for (Element field : elementsByAnnotation.get(Default.class)) {
+        for (Element field : elementsByAnnotation.get(SafeDefault.class)) {
             checkState(isDefaultValid(field),
-                "@Default only applies to public static fields. Not " + field.getSimpleName(),
+                "@SafeDefault only applies to public static fields. Not " + field.getSimpleName(),
                 processingEnv);
-            AnnotationMirror restrictionAnnotation = getAnnotationMirror(field, Default.class);
+            AnnotationMirror restrictionAnnotation = getAnnotationMirror(field, SafeDefault.class);
             if (restrictionAnnotation == null) {
                 unprocessable.add(field);
                 continue;
@@ -129,7 +129,7 @@ final class CollectLabels implements BasicAnnotationProcessor.ProcessingStep {
             PolicyRule.Builder rule = policyRules.get(label);
             if (rule == null) {
                 processingEnv.getMessager().printMessage(Diagnostic.Kind.WARNING,
-                    "Default value for \"" + label + "\" does not have a corresponding field.");
+                    "SafeDefault value for \"" + label + "\" does not have a corresponding field.");
             } else {
                 rule.setSafeDefault(field);
             }
@@ -202,7 +202,7 @@ final class CollectLabels implements BasicAnnotationProcessor.ProcessingStep {
     }
 
     /**
-     * Checks that {@link Default} is only applied to public, static fields.
+     * Checks that {@link SafeDefault} is only applied to public, static fields.
      */
     private static boolean isDefaultValid(Element e) {
         return e.getKind().equals(ElementKind.FIELD)

@@ -1,7 +1,7 @@
 package com.scottkrulcik.agnostic.data;
 
 import com.google.auto.value.AutoValue;
-import com.scottkrulcik.agnostic.annotations.Default;
+import com.scottkrulcik.agnostic.annotations.SafeDefault;
 import com.scottkrulcik.agnostic.annotations.Restrict;
 import com.scottkrulcik.agnostic.annotations.Restriction;
 
@@ -13,9 +13,9 @@ import java.util.Date;
  */
 @AutoValue
 public abstract class SampleData {
-    @Default("name")
+    @SafeDefault("name")
     public static final String ANONYMOUS = "Anonymous";
-    @Default("creationDate")
+    @SafeDefault("creationDate")
     public static final Date DEFAULT_DATE = Date.from(Instant.EPOCH);
 
     @Restrict("creationDate")

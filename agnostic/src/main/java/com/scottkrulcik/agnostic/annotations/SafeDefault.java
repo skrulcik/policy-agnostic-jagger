@@ -11,7 +11,7 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
  */
 @Target(FIELD)
 @Retention(RUNTIME)
-public @interface Default {
+public @interface SafeDefault {
 
     /**
      * The name of the label that this predicate guards.
