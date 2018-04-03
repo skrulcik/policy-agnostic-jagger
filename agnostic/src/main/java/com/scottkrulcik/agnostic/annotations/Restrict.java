@@ -25,11 +25,5 @@ public @interface Restrict {
     /**
      * Name, or label, to call this restriction by elsewhere.
      */
-    String label();
-
-    /**
-     * Labels that this label depends on. Label A depends on label B if a field guarded by label
-     * B is used by label A.
-     */
-    String[] dependencies() default {};
+    String value();
 }

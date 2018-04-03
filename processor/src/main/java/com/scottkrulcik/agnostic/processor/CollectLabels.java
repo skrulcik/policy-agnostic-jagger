@@ -39,10 +39,8 @@ final class CollectLabels implements BasicAnnotationProcessor.ProcessingStep {
 
     private final ProcessingEnvironment processingEnv;
 
-    private static final String LABEL_FIELD = "label";
+    private static final String LABEL_FIELD = "value";
     private static final String DEPENDENCIES_FIELD = "dependencies";
-    // TODO(skrulcik): make annotation field name consistent
-    private static final String VALUE_LABEL_FIELD = "value";
 
     CollectLabels(ProcessingEnvironment processingEnv) {
         this.processingEnv = processingEnv;
@@ -69,7 +67,6 @@ final class CollectLabels implements BasicAnnotationProcessor.ProcessingStep {
             }
             // Get the raw versions of annotation values, and check before casting
             AnnotationValue rawLabel = getAnnotationValue(restrictAnnotation, LABEL_FIELD);
-            AnnotationValue rawDeps = getAnnotationValue(restrictAnnotation, DEPENDENCIES_FIELD);
             if (rawLabel == null) {
                 unprocessable.add(accessor);
                 continue;
@@ -85,16 +82,6 @@ final class CollectLabels implements BasicAnnotationProcessor.ProcessingStep {
                 policyRules.put(label, PolicyRule.builder(label).setAccessor(accessor));
             }
 
-            // TODO(skrulcik): investigate why this is a NPE instead of proper default of {}
-            try {
-                List<String> dependencies = AnnotationUtils.asList(rawDeps);
-                for (String dep : dependencies) {
-                    labelDeps.addNode(dep);
-                    labelDeps.putEdge(label, dep);
-                }
-            } catch (NullPointerException ignore) {
-                // No dependencies, not a problem
-            }
         }
 
         for (Element predicate : elementsByAnnotation.get(Restriction.class)) {
@@ -105,7 +92,7 @@ final class CollectLabels implements BasicAnnotationProcessor.ProcessingStep {
                 continue;
             }
             // Get the raw versions of annotation values, and check before casting
-            AnnotationValue rawLabel = getAnnotationValue(restrictionAnnotation, VALUE_LABEL_FIELD);
+            AnnotationValue rawLabel = getAnnotationValue(restrictionAnnotation, LABEL_FIELD);
             String label = (String) rawLabel.getValue();
             PolicyRule.Builder rule = policyRules.get(label);
             if (rule == null) {
@@ -113,6 +100,17 @@ final class CollectLabels implements BasicAnnotationProcessor.ProcessingStep {
                     "Restriction label " + label + " does not guard any fields.");
             } else {
                 rule.setPredicate(predicate);
+            }
+            // TODO(skrulcik): investigate why this is a NPE instead of proper default of {}
+            AnnotationValue rawDeps = getAnnotationValue(restrictionAnnotation, DEPENDENCIES_FIELD);
+            try {
+                List<String> dependencies = AnnotationUtils.asList(rawDeps);
+                for (String dep : dependencies) {
+                    labelDeps.addNode(dep);
+                    labelDeps.putEdge(label, dep);
+                }
+            } catch (NullPointerException ignore) {
+                // No dependencies, not a problem
             }
         }
 
@@ -126,7 +124,7 @@ final class CollectLabels implements BasicAnnotationProcessor.ProcessingStep {
                 continue;
             }
             // Get the raw versions of annotation values, and check before casting
-            AnnotationValue rawLabel = getAnnotationValue(restrictionAnnotation, VALUE_LABEL_FIELD);
+            AnnotationValue rawLabel = getAnnotationValue(restrictionAnnotation, LABEL_FIELD);
             String label = (String) rawLabel.getValue();
             PolicyRule.Builder rule = policyRules.get(label);
             if (rule == null) {

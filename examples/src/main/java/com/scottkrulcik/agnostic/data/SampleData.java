@@ -18,7 +18,7 @@ public abstract class SampleData {
     @Default("creationDate")
     public static final Date DEFAULT_DATE = Date.from(Instant.EPOCH);
 
-    @Restrict(label = "creationDate")
+    @Restrict("creationDate")
     public abstract Date creationDate();
 
     @Restriction("creationDate")
@@ -26,14 +26,13 @@ public abstract class SampleData {
         return false;
     }
 
-    @Restrict(label = "name", dependencies = {"creationDate"})
+    @Restrict("name")
     public abstract String name();
 
-    @Restriction("name")
+    @Restriction(value = "name", dependencies = {"creationDate"})
     public final boolean isNameVisible() {
         return true;
     }
-
 
     public abstract SampleData withName(String name);
 
