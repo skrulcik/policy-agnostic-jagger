@@ -3,7 +3,10 @@ plugins {
     id 'application'
     // annotation processing plugin
     id 'org.inferred.processors' version '1.2.15'
+    // Google's static analysis tool
+    id "net.ltgt.errorprone" version "0.0.13"
 }
+
 
 dependencies {
     // Annoation processors

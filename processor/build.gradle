@@ -1,3 +1,8 @@
+plugins {
+    // Google's static analysis tool
+    id "net.ltgt.errorprone" version "0.0.13"
+}
+
 dependencies {
     implementation 'com.google.auto:auto-common:0.10'
     implementation 'com.google.auto.service:auto-service:1.0-rc2'
