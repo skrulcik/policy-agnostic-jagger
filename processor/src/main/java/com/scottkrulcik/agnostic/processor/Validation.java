@@ -25,8 +25,7 @@ final class Validation {
     static boolean isRestrictionValid(Element e) {
         return e.getKind().equals(ElementKind.METHOD)
             && e.getModifiers().contains(Modifier.PUBLIC)
-            && e.getModifiers().contains(Modifier.FINAL)
-            && !e.getModifiers().contains(Modifier.STATIC);
+            && e.getModifiers().contains(Modifier.FINAL);
     }
 
     /**
