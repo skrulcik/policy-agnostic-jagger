@@ -40,7 +40,9 @@ public class RestrictionProcessor extends BasicAnnotationProcessor {
 
         collectLabels = new CollectLabels(processingEnv);
         createSanitizerModules = new CreateSanitizerModules(processingEnv, collectLabels, this::writeToFile);
-        return Arrays.asList(collectLabels, createSanitizerModules);
+        // TODO(skrulcik): Add back sanitizer generation after hard-coded version is finished
+        // Collect labels still runs to make sure the annotations are still correct
+        return Arrays.asList(collectLabels);
     }
 
     @Override
