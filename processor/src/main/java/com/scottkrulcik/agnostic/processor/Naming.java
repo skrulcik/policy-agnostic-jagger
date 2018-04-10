@@ -1,9 +1,11 @@
 package com.scottkrulcik.agnostic.processor;
 
 import com.google.common.base.Preconditions;
+import com.google.common.base.Splitter;
 
 import javax.lang.model.element.Element;
 import javax.lang.model.type.TypeMirror;
+import java.util.List;
 
 import static com.scottkrulcik.agnostic.processor.AnnotationUtils.CLASS_LIKE_ELEMENT_KINDS;
 import static javax.lang.model.element.ElementKind.METHOD;
@@ -24,8 +26,8 @@ final class Naming {
     }
 
     static String getSimpleName(TypeMirror typeMirror) {
-        String[] tokens = typeMirror.toString().split("\\.");
-        return tokens[tokens.length - 1];
+        List<String> tokens = Splitter.on("\\.").splitToList(typeMirror.toString());
+        return tokens.get(tokens.size() - 1);
     }
 
     static String rawMethodName(Element originalMethod) {
