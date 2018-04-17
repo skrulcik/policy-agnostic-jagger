@@ -1,36 +1,32 @@
 package com.scottkrulcik.agnostic.examples.medical;
 
-import com.scottkrulcik.agnostic.examples.DataStore;
-import com.scottkrulcik.agnostic.examples.medical.Model.Person;
-import com.scottkrulcik.agnostic.examples.medical.Model.Record;
+import dagger.Component;
 
-import java.util.Set;
+/**
+ * Top level component for the EMR management/analysis tool. Each component attempts to provide the
+ * same service, but with different authorization techniques. In production, the usual setup would
+ * only have a two top-level components: a {@code Test} configuration extending {@code Production}.
+ *
+ * <p>Authorization types:</p>
+ * <ul>
+ *     <li>{@code Naive} - No authorization</li>
+ *     <li>{@code AdHoc} - Authorization is dispersed throughout</li>
+ *     <li>{@code Jagger} - Authorization enforced by Jagger</li>
+ * </ul>
+ */
+interface RecordService {
 
-abstract class RecordService {
-    final DataStore data;
-    final MedicalContext context;
-
-    RecordService(DataStore data, MedicalContext context) {
-        this.data = data;
-        this.context = context;
+    @Component
+    interface Naive {
+        RecordServiceServer server();
     }
 
+    @Component
+    interface AdHoc extends Naive {
+    }
 
-    /**
-     * Fetches the medical history for the given patient, consisting of all of their records.
-     *
-     * @param patient patient whose records must be fetched.
-     * @return A set containing the (unordered) medical records pertaining to {@code patient}.
-     */
-    abstract Set<Record> medicalHistory(Person patient);
+    @Component
+    interface Jagger extends Naive {
 
-
-    /**
-     * Fetches the set of patients who are afflicted with a specific condition.
-     *
-     * @param condition the condition to search for.
-     * @return A set containing patients who have records indicating they were treated for
-     * conditions in the past.
-     */
-    abstract Set<Person> patientsWithCondition(String condition);
+    }
 }
