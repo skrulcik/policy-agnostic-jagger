@@ -7,7 +7,7 @@ import com.scottkrulcik.agnostic.examples.medical.Model.Record;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-final class NaiveRecordService extends RecordService {
+final class NaiveRecordService extends RecordServiceServer {
     NaiveRecordService(DataStore data, MedicalContext context) {
         super(data, context);
     }
