@@ -7,7 +7,7 @@ import com.scottkrulcik.agnostic.annotations.SafeDefault;
 
 import javax.inject.Qualifier;
 
-final class Model {
+public final class Model {
 
     @SafeDefault("psychNoteRule")
     public static final String REDACTED = "REDACTED";
@@ -22,16 +22,16 @@ final class Model {
     public static final Record EMPTY_REC = Record.create(ANON_PATIENT, ANON_DOC, REDACTED, false);
 
     @AutoValue
-    static abstract class Person {
+    public static abstract class Person {
         abstract String name();
 
-        static Person create(String name) {
+        public static Person create(String name) {
             return new AutoValue_Model_Person(name);
         }
     }
 
     @AutoValue
-    static abstract class Record {
+    public static abstract class Record {
         abstract Person patient();
 
         abstract Person provider();
@@ -47,7 +47,7 @@ final class Model {
             return withCondition(REDACTED);
         }
 
-        static Record create(Person patient, Person provider, String condition, boolean isPsychNote) {
+        public static Record create(Person patient, Person provider, String condition, boolean isPsychNote) {
             return new AutoValue_Model_Record(patient, provider, condition, isPsychNote);
         }
 
@@ -64,7 +64,7 @@ final class Model {
 
     // TODO(skrulcik): allow patients to see it too
     @AutoValue
-    static abstract class ConsentForm {
+    public static abstract class ConsentForm {
         @Restrict("record")
         public abstract Record record();
 
@@ -85,7 +85,7 @@ final class Model {
          * Creates a consent form object stating that {@code patient} permits {@code provider} to
          * view record {@code record}.
          */
-        static ConsentForm create(Record record, Person provider) {
+        public static ConsentForm create(Record record, Person provider) {
             return new AutoValue_Model_ConsentForm(record, provider);
         }
     }
@@ -95,6 +95,9 @@ final class Model {
 
     @Qualifier
     @interface Doctor {}
+
+    @Qualifier
+    @interface Condition {}
 
     private Model() {
     }
