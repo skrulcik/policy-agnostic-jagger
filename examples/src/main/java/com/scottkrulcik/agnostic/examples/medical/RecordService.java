@@ -2,6 +2,8 @@ package com.scottkrulcik.agnostic.examples.medical;
 
 import dagger.Component;
 
+import javax.inject.Singleton;
+
 /**
  * Top level component for the EMR management/analysis tool. Each component attempts to provide the
  * same service, but with different authorization techniques. In production, the usual setup would
@@ -16,17 +18,24 @@ import dagger.Component;
  */
 interface RecordService {
 
-    @Component
+    @Component(modules = {
+        DataStoreModule.class,
+        NaiveRecordService.class,
+    })
+    @Singleton
     interface Naive {
         RecordServiceServer server();
     }
 
-    @Component
+    @Component(modules = {
+        DataStoreModule.class,
+        AdHocRecordServiceModule.class,
+    })
+    @Singleton
     interface AdHoc extends Naive {
     }
 
-    @Component
-    interface Jagger extends Naive {
-
-    }
+    // TODO(skrulcik): implement JaggerRecordServiceModule
+    // @Component
+    // interface Jagger extends Naive { }
 }

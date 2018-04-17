@@ -1,17 +1,25 @@
 package com.scottkrulcik.agnostic.examples.medical;
 
-
 import com.google.common.collect.ImmutableSet;
-import com.scottkrulcik.agnostic.examples.DataStore;
-import com.scottkrulcik.agnostic.examples.medical.Model.ConsentForm;
 import com.scottkrulcik.agnostic.examples.medical.Model.Person;
 import com.scottkrulcik.agnostic.examples.medical.Model.Record;
+import com.scottkrulcik.agnostic.examples.medical.sampledata.DataSet1;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.util.Arrays;
 import java.util.Set;
 
+import static com.scottkrulcik.agnostic.examples.medical.sampledata.DataSet1_TestAccess.alice;
+import static com.scottkrulcik.agnostic.examples.medical.sampledata.DataSet1_TestAccess.bob;
+import static com.scottkrulcik.agnostic.examples.medical.sampledata.DataSet1_TestAccess.docC;
+import static com.scottkrulcik.agnostic.examples.medical.sampledata.DataSet1_TestAccess.docD;
+import static com.scottkrulcik.agnostic.examples.medical.sampledata.DataSet1_TestAccess.docE;
+import static com.scottkrulcik.agnostic.examples.medical.sampledata.DataSet1_TestAccess.psychRec1;
+import static com.scottkrulcik.agnostic.examples.medical.sampledata.DataSet1_TestAccess.psychRec2;
+import static com.scottkrulcik.agnostic.examples.medical.sampledata.DataSet1_TestAccess.rec1;
+import static com.scottkrulcik.agnostic.examples.medical.sampledata.DataSet1_TestAccess.rec2;
+import static com.scottkrulcik.agnostic.examples.medical.sampledata.DataSet1_TestAccess.rec3;
+import static com.scottkrulcik.agnostic.examples.medical.sampledata.DataSet1_TestAccess.rec4;
 import static java.util.Collections.singleton;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.empty;
@@ -21,55 +29,27 @@ import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.not;
 
 public final class MedicalExampleTest {
-    RecordService service;
-    MutableContext testContext;
-
-    private Person alice = Person.create("alice");
-    private Person bob = Person.create("bob");
-    private Person docC = Person.create("dr. charlie");
-    private Person docD = Person.create("dr. diane");
-    private Person docE = Person.create("dr. evil");
-
-    private Record rec1 = Record.create(alice, docC, "flu", false);
-    private Record rec2 = Record.create(alice, docC, "broken bone", false);
-    private Record rec3 = Record.create(bob, docC, "bronchitis", false);
-    private Record rec4 = Record.create(bob, docC, "flu", false);
-
-    private Record psychRec1 = Record.create(alice, docD, "broken heart", true);
-    private Record psychRec2 = Record.create(bob, docD, "drug addiction", true);
-
-    private ConsentForm consentPsych2 = ConsentForm.create(psychRec2, docC);
-
+    RecordServiceServer service;
 
     @Before
     public void setUp() {
-        DataStore store = new DataStore();
-        populateStore(store);
-        testContext = new MutableContext();
-        service = new AdHocRecordService(store, testContext);
+        service = DaggerRecordService_AdHoc.builder()
+            .dataStoreModule(new DataStoreModule(DataSet1.INSTANCE))
+            .build().server();
     }
 
-    private static final class MutableContext implements MedicalContext {
-        private Model.Person requester = null;
-
-        @Override
-        public Model.Person requester() {
-            return requester;
-        }
+    /**
+     * Helper function to avoid boilerplate around making a history request.
+     */
+    private Set<Record> fetchHistory(Person doctor, Person patient) {
+        return service.medicalHistory(new HistoryEndpoint.Request(doctor, patient)).history();
     }
 
-    private void populateStore(DataStore store) {
-        for (Person p : Arrays.asList(alice, bob, docC, docD, docE)) {
-            store.add(Person.class, p);
-        }
-
-        for (Record r : Arrays.asList(rec1, rec2, rec3, rec4, psychRec1, psychRec2)) {
-            store.add(Record.class, r);
-        }
-
-        for (ConsentForm c : Arrays.asList(consentPsych2)) {
-            store.add(ConsentForm.class, c);
-        }
+    /**
+     * Helper function to avoid boilerplate around making a condition search.
+     */
+    private Set<Person> searchCondition(Person doctor, String condition) {
+        return service.patientsWithCondition(new SearchEndpoint.Request(doctor, condition)).patients();
     }
 
     /**
@@ -77,10 +57,9 @@ public final class MedicalExampleTest {
      */
     @Test
     public void testNormalHistory() {
-        for (Person requester : ImmutableSet.of(docC, docD)) {
-            testContext.requester = requester;
-            Set<Record> aliceRecords = service.medicalHistory(alice);
-            Set<Record> bobRecords = service.medicalHistory(bob);
+        for (Person doc : ImmutableSet.of(docC, docD)) {
+            Set<Record> aliceRecords = fetchHistory(doc, alice);
+            Set<Record> bobRecords = fetchHistory(doc, bob);
 
             assertThat(aliceRecords, hasItems(rec1, rec2));
             assertThat(bobRecords, hasItems(rec3, rec4));
@@ -90,36 +69,31 @@ public final class MedicalExampleTest {
 
     @Test
     public void testNoHistory() {
-        testContext.requester = docC;
-        assertThat(service.medicalHistory(docC), empty());
-        assertThat(service.medicalHistory(docD), empty());
+        assertThat(fetchHistory(docC, docC), empty());
+        assertThat(fetchHistory(docC, docD), empty());
     }
 
     @Test
     public void testPsychNoteHistory() {
-        testContext.requester = docD;
         // Consent signed, and author
-        assertThat(service.medicalHistory(bob), hasItem(psychRec2));
+        assertThat(fetchHistory(docD, bob), hasItem(psychRec2));
         // Consent unsigned, and author
-        assertThat(service.medicalHistory(alice), hasItem(psychRec1));
+        assertThat(fetchHistory(docD, alice), hasItem(psychRec1));
 
-        testContext.requester = docC;
         // Consent signed, and not author
-        assertThat(service.medicalHistory(bob), hasItem(psychRec2));
+        assertThat(fetchHistory(docC, bob), hasItem(psychRec2));
         // Consent unsigned, and not author
-        assertThat(service.medicalHistory(alice), not(hasItem(psychRec1)));
+        assertThat(fetchHistory(docC, alice), not(hasItem(psychRec1)));
 
-        testContext.requester = docE;
         // Consent unsigned, and not author
-        assertThat(service.medicalHistory(bob), not(hasItem(psychRec2)));
-        assertThat(service.medicalHistory(alice), not(hasItem(psychRec1)));
+        assertThat(fetchHistory(docE, bob), not(hasItem(psychRec2)));
+        assertThat(fetchHistory(docE, alice), not(hasItem(psychRec1)));
     }
 
     @Test
     public void testNormalSearch() {
-        testContext.requester = docE;
-        Set<Person> fluPatients = service.patientsWithCondition("flu");
-        Set<Person> bronchitisPatients = service.patientsWithCondition("bronchitis");
+        Set<Person> fluPatients = searchCondition(docE, "flu");
+        Set<Person> bronchitisPatients = searchCondition(docE, "bronchitis");
 
         assertThat(fluPatients, is(ImmutableSet.of(alice, bob)));
         assertThat(bronchitisPatients, is(ImmutableSet.of(bob)));
@@ -127,24 +101,20 @@ public final class MedicalExampleTest {
 
     @Test
     public void testEmptySearch() {
-        testContext.requester = docE;
-        Set<Person> esotericDiseasePatients = service.patientsWithCondition("esotericDisease");
+        Set<Person> esotericDiseasePatients = searchCondition(docE, "esotericDisease");
         assertThat(esotericDiseasePatients, empty());
     }
 
     @Test
     public void testPsychNoteSearch() {
-        testContext.requester = docC;
-        assertThat(service.patientsWithCondition("broken heart"), empty());
-        assertThat(service.patientsWithCondition("drug addiction"), is(singleton(bob)));
+        assertThat(searchCondition(docC, "broken heart"), empty());
+        assertThat(searchCondition(docC, "drug addiction"), is(singleton(bob)));
 
-        testContext.requester = docD;
-        assertThat(service.patientsWithCondition("broken heart"), is(singleton(alice)));
-        assertThat(service.patientsWithCondition("drug addiction"), is(singleton(bob)));
+        assertThat(searchCondition(docD, "broken heart"), is(singleton(alice)));
+        assertThat(searchCondition(docD, "drug addiction"), is(singleton(bob)));
 
-        testContext.requester = docE;
-        assertThat(service.patientsWithCondition("broken heart"), empty());
-        assertThat(service.patientsWithCondition("drug addiction"), empty());
+        assertThat(searchCondition(docE, "broken heart"), empty());
+        assertThat(searchCondition(docE, "drug addiction"), empty());
     }
 
 }
