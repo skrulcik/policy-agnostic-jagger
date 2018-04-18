@@ -83,7 +83,7 @@ final class CollectLabels implements BasicAnnotationProcessor.ProcessingStep {
         }
 
         for (Element predicate : elementsByAnnotation.get(Restriction.class)) {
-            checkState(isRestrictionValid(predicate), "Restriction cannot be applied here", processingEnv);
+            checkState(isRestrictionValid(predicate), "Restriction cannot be applied to " + predicate.getSimpleName(), processingEnv);
             AnnotationMirror restrictionAnnotation = getAnnotationMirror(predicate, Restriction.class);
             if (restrictionAnnotation == null) {
                 unprocessable.add(predicate);
@@ -98,6 +98,7 @@ final class CollectLabels implements BasicAnnotationProcessor.ProcessingStep {
                     "Restriction label " + label + " does not guard any fields.");
             } else {
                 rule.setPredicate(predicate);
+                labelDeps.addNode(label);
             }
             // TODO(skrulcik): investigate why this is a NPE instead of proper default of {}
             AnnotationValue rawDeps = getAnnotationValue(restrictionAnnotation, DEPENDENCIES_FIELD);

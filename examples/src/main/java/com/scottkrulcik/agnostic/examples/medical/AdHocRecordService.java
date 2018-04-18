@@ -5,41 +5,62 @@ import com.scottkrulcik.agnostic.examples.DataStore;
 import com.scottkrulcik.agnostic.examples.medical.Model.ConsentForm;
 import com.scottkrulcik.agnostic.examples.medical.Model.Person;
 import com.scottkrulcik.agnostic.examples.medical.Model.Record;
+import dagger.Module;
+import dagger.Provides;
 
+import javax.inject.Singleton;
 import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
-final class AdHocRecordService extends RecordService {
-    AdHocRecordService(DataStore data, MedicalContext context) {
-        super(data, context);
-    }
+import static com.google.common.collect.ImmutableSet.copyOf;
 
-    private boolean canSharePsychNote(Record rec) {
+@Module
+@Singleton
+final class AdHocRecordServiceModule {
+
+    private boolean canSharePsychNote(DataStore data, Record rec, Person requester) {
         Preconditions.checkArgument(rec.isPsychNote());
-        if (rec.provider().equals(context.requester())) {
+        if (rec.provider().equals(requester)) {
             return true;
         }
         Predicate<ConsentForm> matchesRecordAndRequester =
-            cf -> cf.record().equals(rec) && cf.provider().equals(context.requester());
+            cf -> cf.record().equals(rec) && cf.provider().equals(requester);
 
         Set<ConsentForm> signedForms = data.filter(ConsentForm.class, matchesRecordAndRequester);
         return !signedForms.isEmpty();
 
     }
 
-    @Override
-    Set<Record> medicalHistory(Person patient) {
-        return data.filter(Record.class, r ->
-            r.patient().equals(patient) && (!r.isPsychNote() || canSharePsychNote(r))
-        );
+    @Provides
+    @Singleton
+    HistoryEndpoint historyEndpoint(DataStore data) {
+        return new HistoryEndpoint() {
+            @Override
+            public Response handleRequest(Request request) {
+                Person patient = request.providesPatient();
+                Person doctor = request.providesDoctor();
+                Set<Record> history = data.filter(Record.class, r ->
+                    r.patient().equals(patient) && (!r.isPsychNote() || canSharePsychNote(data, r, doctor))
+                );
+                return HistoryEndpoint.Response.create(copyOf(history));
+            }
+        };
     }
 
-    @Override
-    Set<Person> patientsWithCondition(String condition) {
-        Set<Record> matchingRecords = data.filter(Record.class, r ->
-            r.condition().equals(condition) && (!r.isPsychNote() || canSharePsychNote(r)));
-        Set<Person> matchingPatients = matchingRecords.stream().map(Record::patient).collect(Collectors.toSet());
-        return matchingPatients;
+    @Provides
+    @Singleton
+    SearchEndpoint searchEndpoint(DataStore data) {
+        return new SearchEndpoint() {
+            @Override
+            public Response handleRequest(Request request) {
+                String condition = request.providesCondition();
+                Person doctor = request.providesDoctor();
+                Set<Record> matchingRecords = data.filter(Record.class, r ->
+                    r.condition().equals(condition) && (!r.isPsychNote() || canSharePsychNote(data, r, doctor)));
+                Set<Person> matchingPatients = matchingRecords.stream().map(Record::patient).collect(Collectors.toSet());
+                return Response.create(copyOf(matchingPatients));
+            }
+        };
     }
 }
