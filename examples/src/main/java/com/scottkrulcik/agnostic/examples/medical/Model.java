@@ -41,12 +41,6 @@ public final class Model {
 
         abstract boolean isPsychNote();
 
-        abstract Record withCondition(String condition);
-
-        Record sanitizeCondition() {
-            return withCondition(REDACTED);
-        }
-
         public static Record create(Person patient, Person provider, String condition, boolean isPsychNote) {
             return new AutoValue_Model_Record(patient, provider, condition, isPsychNote);
         }
@@ -57,7 +51,7 @@ public final class Model {
                 query.matching(cf -> cf.provider().equals(requester) && cf.record().equals(this)).build();
             return !this.isPsychNote()
                 || requester.equals(this.provider())
-                || !consentFormQuery.get().isEmpty();
+                || !consentFormQuery.consentForms().isEmpty();
         }
     }
 
@@ -69,12 +63,6 @@ public final class Model {
         public abstract Record record();
 
         public abstract Person provider();
-
-        abstract ConsentForm withRecord(Record record);
-
-        ConsentForm sanitizeRecord() {
-            return withRecord(EMPTY_REC);
-        }
 
         @Restriction("record")
         public final boolean formVisible(@Doctor Person doctor) {
