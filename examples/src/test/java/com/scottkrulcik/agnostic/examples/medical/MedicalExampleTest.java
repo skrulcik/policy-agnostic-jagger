@@ -35,21 +35,21 @@ public final class MedicalExampleTest {
     public void setUp() {
         service = DaggerRecordService_AdHoc.builder()
             .dataStoreModule(new DataStoreModule(DataSet1.INSTANCE))
-            .build().server();
+            .build().healthService();
     }
 
     /**
      * Helper function to avoid boilerplate around making a history request.
      */
     private Set<Record> fetchHistory(Person doctor, Person patient) {
-        return service.medicalHistory(new HistoryEndpoint.Request(doctor, patient)).history();
+        return service.medicalHistory(doctor, patient).history();
     }
 
     /**
      * Helper function to avoid boilerplate around making a condition search.
      */
     private Set<Person> searchCondition(Person doctor, String condition) {
-        return service.patientsWithCondition(new SearchEndpoint.Request(doctor, condition)).patients();
+        return service.patientsWithCondition(doctor, condition).patients();
     }
 
     /**
