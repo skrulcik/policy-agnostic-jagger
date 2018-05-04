@@ -12,27 +12,28 @@ import javax.inject.Singleton;
  * <p>Authorization types:</p>
  * <ul>
  *     <li>{@code Naive} - No authorization</li>
- *     <li>{@code AdHoc} - Authorization is dispersed throughout</li>
+ *     <li>{@code AdHocBackend} - Authorization is dispersed throughout</li>
  *     <li>{@code Jagger} - Authorization enforced by Jagger</li>
  * </ul>
  */
 interface RecordService {
 
+    interface HealthService {}
+
     @Component(modules = {
         DataStoreModule.class,
-        NaiveRecordService.class,
+        NaiveBackend.class,
     })
     @Singleton
-    interface Naive {
-        RecordServiceServer server();
+    interface Naive extends HealthService {
     }
 
     @Component(modules = {
         DataStoreModule.class,
-        AdHocRecordServiceModule.class,
+        AdHocBackend.class
     })
     @Singleton
-    interface AdHoc extends Naive {
+    interface AdHoc extends HealthService {
     }
 
     // TODO(skrulcik): implement JaggerRecordServiceModule

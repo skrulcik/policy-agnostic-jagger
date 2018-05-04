@@ -29,7 +29,7 @@ import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.not;
 
 public final class MedicalExampleTest {
-    RecordServiceServer service;
+    HealthService service;
 
     @Before
     public void setUp() {
