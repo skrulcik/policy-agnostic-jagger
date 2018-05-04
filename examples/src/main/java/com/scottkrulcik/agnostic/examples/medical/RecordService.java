@@ -18,22 +18,24 @@ import javax.inject.Singleton;
  */
 interface RecordService {
 
-    interface HealthService {}
+    interface HealthServiceConfiguration {
+        HealthService healthService();
+    }
 
+    @Singleton
     @Component(modules = {
         DataStoreModule.class,
         NaiveBackend.class,
     })
-    @Singleton
-    interface Naive extends HealthService {
+    interface Naive extends HealthServiceConfiguration {
     }
 
+    @Singleton
     @Component(modules = {
         DataStoreModule.class,
         AdHocBackend.class
     })
-    @Singleton
-    interface AdHoc extends HealthService {
+    interface AdHoc extends HealthServiceConfiguration {
     }
 
     // TODO(skrulcik): implement JaggerRecordServiceModule

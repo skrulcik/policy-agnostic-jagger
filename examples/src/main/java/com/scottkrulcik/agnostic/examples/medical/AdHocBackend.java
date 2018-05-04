@@ -10,12 +10,15 @@ import dagger.Module;
 import dagger.Provides;
 import dagger.Subcomponent;
 
+import javax.inject.Provider;
 import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import static com.google.common.collect.ImmutableSet.copyOf;
-import static com.scottkrulcik.agnostic.examples.medical.Model.*;
+import static com.scottkrulcik.agnostic.examples.medical.Model.Condition;
+import static com.scottkrulcik.agnostic.examples.medical.Model.Doctor;
+import static com.scottkrulcik.agnostic.examples.medical.Model.Patient;
 
 @Module(subcomponents = {AdHocBackend.History.class, AdHocBackend.Search.class})
 final class AdHocBackend {
@@ -68,4 +71,13 @@ final class AdHocBackend {
         }
     }
 
+    @Provides
+    static HealthService.HistoryEndpoint.Builder polymorphicHistory(Provider<History.Builder> provider) {
+        return provider.get();
+    }
+
+    @Provides
+    static HealthService.SearchEndpoint.Builder polymorphicSearch(Provider<Search.Builder> provider) {
+        return provider.get();
+    }
 }

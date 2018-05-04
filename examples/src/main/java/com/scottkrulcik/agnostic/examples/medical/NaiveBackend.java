@@ -8,6 +8,7 @@ import dagger.Module;
 import dagger.Provides;
 import dagger.Subcomponent;
 
+import javax.inject.Provider;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -50,4 +51,13 @@ final class NaiveBackend {
         }
     }
 
+    @Provides
+    static HealthService.HistoryEndpoint.Builder polymorphicHistory(Provider<History.Builder> provider) {
+        return provider.get();
+    }
+
+    @Provides
+    static HealthService.SearchEndpoint.Builder polymorphicSearch(Provider<Search.Builder> provider) {
+        return provider.get();
+    }
 }

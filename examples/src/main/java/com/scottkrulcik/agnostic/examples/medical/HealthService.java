@@ -5,6 +5,7 @@ import dagger.BindsInstance;
 
 import javax.inject.Inject;
 import javax.inject.Provider;
+import javax.inject.Singleton;
 
 import static com.scottkrulcik.agnostic.examples.medical.Model.Condition;
 import static com.scottkrulcik.agnostic.examples.medical.Model.Doctor;
@@ -23,6 +24,7 @@ import static com.scottkrulcik.agnostic.examples.medical.Model.Record;
  *     <li>Define a Backend interface to swap different backends.</li>
  * </ol>
  */
+@Singleton
 final class HealthService {
     private final Provider<HistoryEndpoint.Builder> history;
     private final Provider<SearchEndpoint.Builder> search;
@@ -36,10 +38,10 @@ final class HealthService {
     interface HistoryEndpoint {
         ImmutableSet<Record> history();
         interface Builder {
-            @BindsInstance @Doctor
-            Builder setDoctor(Person request);
-            @BindsInstance @Patient
-            Builder setPatient(Person request);
+            @BindsInstance
+            Builder setDoctor(@Doctor Person request);
+            @BindsInstance
+            Builder setPatient(@Patient Person request);
             HistoryEndpoint run();
         }
     }
@@ -47,10 +49,10 @@ final class HealthService {
     interface SearchEndpoint {
         ImmutableSet<Person> patients();
         interface Builder {
-            @BindsInstance @Doctor
-            Builder setDoctor(Person request);
-            @BindsInstance @Condition
-            Builder setCondition(String condition);
+            @BindsInstance
+            Builder setDoctor(@Doctor Person request);
+            @BindsInstance
+            Builder setCondition(@Condition String condition);
             SearchEndpoint run();
         }
     }
