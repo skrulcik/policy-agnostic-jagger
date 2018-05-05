@@ -1,15 +1,18 @@
 package com.scottkrulcik.agnostic.examples;
 
-import com.google.common.collect.HashMultimap;
-import com.google.common.collect.Multimap;
+import static com.google.common.collect.Multimaps.synchronizedMultimap;
 
-import javax.annotation.concurrent.GuardedBy;
 import java.util.Collection;
 import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
-import static com.google.common.collect.Multimaps.synchronizedMultimap;
+import javax.annotation.concurrent.GuardedBy;
+
+import com.google.common.collect.HashMultimap;
+import com.google.common.collect.Multimap;
+import com.scottkrulcik.agnostic.DAO;
+import com.scottkrulcik.agnostic.SanitizingFactory;
 
 /**
  * Simple container for application data.
@@ -32,4 +35,38 @@ public final class DataStore {
             return unfilteredResults.stream().filter(matcher).collect(Collectors.toSet());
         }
     }
+
+    <T> DAO<T> rawDAO(Class<T> clazz) {
+        final DataStore snapshot = this;
+        return new DAO<T>(){
+            @Override
+            public void add(T instance) {
+                snapshot.add(clazz, instance);
+            }
+
+            @Override
+            public Set<T> filter(Predicate<T> matcher) {
+                return snapshot.filter(clazz, matcher);
+            }
+        };
+    }
+
+    <T> DAO<T> sanitizedDAO(Class<T> clazz, SanitizingFactory<T> factory) {
+        final DataStore snapshot = this;
+        return new DAO<T>(){
+            @Override
+            public void add(T instance) {
+                snapshot.add(clazz, instance);
+            }
+
+            @Override
+            public Set<T> filter(Predicate<T> matcher) {
+                return snapshot.filter(clazz, matcher).stream()
+                    .map(factory::wrap)
+                    .filter(matcher)
+                    .collect(Collectors.toSet());
+            }
+        };
+    }
+
 }

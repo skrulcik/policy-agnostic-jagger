@@ -1,6 +1,7 @@
 package com.scottkrulcik.agnostic.examples.medical;
 
 import com.google.auto.value.AutoValue;
+import com.scottkrulcik.agnostic.DAO;
 import com.scottkrulcik.agnostic.annotations.Restrict;
 import com.scottkrulcik.agnostic.annotations.Restriction;
 import com.scottkrulcik.agnostic.annotations.SafeDefault;
@@ -46,12 +47,10 @@ public final class Model {
         }
 
         @Restriction("psychNoteRule")
-        public final boolean psychNoteRule(@Doctor Person requester, HardCoded.ConsentFormQuery.Builder query) {
-            HardCoded.ConsentFormQuery consentFormQuery =
-                query.matching(cf -> cf.provider().equals(requester) && cf.record().equals(this)).build();
-            return !this.isPsychNote()
-                || requester.equals(this.provider())
-                || !consentFormQuery.consentForms().isEmpty();
+        public final boolean psychNoteRule(@Doctor Person requester, DAO<ConsentForm> dao) {
+            if (!this.isPsychNote() || requester.equals(this.provider()))
+                return true;
+            return !dao.filter(cf -> cf.provider().equals(requester) && cf.record().equals(this)).isEmpty();
         }
     }
 
