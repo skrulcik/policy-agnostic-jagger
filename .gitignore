@@ -1,5 +1,6 @@
 # Explicit Unignore
 !Makefile
+examples/src/main/java/com/scottkrulcik/agnostic/examples/medical/sampledata/GeneratedDataSet.java
 
 # Explicit ingore
 .DS_Store

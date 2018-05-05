@@ -19,9 +19,9 @@ public class DataSet1 extends DataSet {
 
     final Person alice = Person.create("alice");
     final Person bob = Person.create("bob");
-    final Person docC = Person.create("dr. charlie");
-    final Person docD = Person.create("dr. diane");
-    final Person docE = Person.create("dr. evil");
+    final Person docC = Person.create("docC");
+    final Person docD = Person.create("docD");
+    final Person docE = Person.create("docE");
 
     final Record rec1 = Record.create(alice, docC, "flu", false);
     final Record rec2 = Record.create(alice, docC, "broken bone", false);

@@ -18,15 +18,28 @@ import java.util.Set;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
+import static com.google.common.base.Preconditions.checkState;
+import static com.scottkrulcik.agnostic.examples.medical.sampledata.DataSet1_TestAccess.alice;
+import static com.scottkrulcik.agnostic.examples.medical.sampledata.DataSet1_TestAccess.bob;
+import static com.scottkrulcik.agnostic.examples.medical.sampledata.DataSet1_TestAccess.docC;
+import static com.scottkrulcik.agnostic.examples.medical.sampledata.DataSet1_TestAccess.docD;
+import static com.scottkrulcik.agnostic.examples.medical.sampledata.DataSet1_TestAccess.docE;
+import static com.scottkrulcik.agnostic.examples.medical.sampledata.DataSet1_TestAccess.psychRec1;
+import static com.scottkrulcik.agnostic.examples.medical.sampledata.DataSet1_TestAccess.psychRec2;
 import static java.lang.String.join;
 import static java.util.Arrays.stream;
 
+/**
+ * Tightly coupled with {@code generate_tests.py}, consider changes carefully.
+ */
 public final class EvaluationTimer {
     private static final int NUM_RUNS = 200;
 
     private static Set<Person> patients = GeneratedDataSet.INSTANCE.people().stream().filter(p -> p.name().contains("p")).collect(Collectors.toSet());
     private static Set<Person> doctors = GeneratedDataSet.INSTANCE.people().stream().filter(p -> p.name().contains("d")).collect(Collectors.toSet());
     private static Set<String> conditions = GeneratedDataSet.INSTANCE.records().stream().map(r -> r.condition()).collect(Collectors.toSet());
+    // p0 is guaranteed not to have pysch records
+    private static Person NO_PSYCH = Person.create("p0");
 
     private static final Path TRIAL_DIR;
     static {
@@ -36,9 +49,27 @@ public final class EvaluationTimer {
 
     // Test specifications to run
     private static final ImmutableMap<String, Consumer<HealthService>> specifications =
-        ImmutableMap.of(
-            "dummy", service -> { }
-        );
+        ImmutableMap.<String,Consumer<HealthService>>builder()
+            .put("no_psych", service -> {
+                service.medicalHistory(docC, NO_PSYCH);
+            })
+            .put("consent_author", service -> {
+                checkState(service.medicalHistory(docD, alice).history().contains(psychRec1));
+            })
+            .put("consent_form", service -> {
+                checkState(service.medicalHistory(docC, bob).history().contains(psychRec2));
+            })
+            .put("no_consent", service -> {
+                // Cannot check state because of the naive implementation
+                service.medicalHistory(docE, alice);
+            })
+            .put("simple_search", service -> {
+                service.patientsWithCondition(docC, "c1");
+            })
+            .put("psych_search", service -> {
+                checkState(!service.patientsWithCondition(doctors.iterator().next(), "pc1").patients().isEmpty());
+            }
+        ).build();
 
     private static final ImmutableList<ServiceDef> services;
     static {

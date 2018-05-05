@@ -1,4 +1,7 @@
 #!python3
+# Extra rules:
+# - p0 has no psych records
+# - data from DataSet1 is the same
 
 import random
 
@@ -90,13 +93,29 @@ psych_records = []
 consent_forms = []
 for i in range(NUM_PSYCH_RECORDS):
     recordName = "pr" + str(i)
-    patient = random.choice(patients)
+    # Extra rules:
+    # - p0 has no psych records
+    patient = random.choice(patients[2:])
     doctor = random.choice(doctors)
     condition = random.choice(psych_conditions)
     psych_records.append((recordName, patient, doctor, condition, "true"))
     if random.random() < PSYCH_RECORD_DISCLOSURE:
         for doctor in doctors:
             consent_forms.append(("cf" + str(len(consent_forms)), psych_records[i][0], doctor))
+
+# Hard-coded relationships, same as DataSet1
+patients.extend(['alice', 'bob'])
+doctors.extend(['docC', 'docD', 'docE'])
+records.extend([
+    ('rec1', 'alice', 'docC', "flu"         , 'false'),
+    ('rec2', 'alice', 'docC', "broken bone" , 'false'),
+    ('rec3', 'bob'  , 'docC', "bronchitis"  , 'false'),
+    ('rec4', 'bob'  , 'docC', "flu"         , 'false'),
+    ('psychRec1', 'alice', 'docD', "broken heart", 'true'),
+    ('psychRec2', 'bob', 'docD', "drug addiction", 'true'),
+])
+consent_forms.append(('consentPsych2', 'psychRec2', 'docC'))
+
 
 def formatPeople(people):
     lines = []
