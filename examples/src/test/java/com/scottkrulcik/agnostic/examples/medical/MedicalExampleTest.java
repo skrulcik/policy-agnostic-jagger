@@ -33,7 +33,8 @@ public final class MedicalExampleTest {
 
     @Before
     public void setUp() {
-        service = DaggerRecordService_AdHoc.builder()
+        // service = DaggerRecordService_AdHoc.builder()
+        service = DaggerRecordService_Jagger.builder()
             .dataStoreModule(new DataStoreModule(DataSet1.INSTANCE))
             .build().healthService();
     }
