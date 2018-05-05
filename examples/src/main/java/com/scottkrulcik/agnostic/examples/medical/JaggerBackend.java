@@ -17,7 +17,7 @@ import static com.scottkrulcik.agnostic.examples.medical.Model.Condition;
 import static com.scottkrulcik.agnostic.examples.medical.Model.Patient;
 
 @Module(subcomponents = {NaiveBackend.History.class, NaiveBackend.Search.class})
-final class NaiveBackend {
+final class JaggerBackend {
 
     @Module
     static final class HistoryModule {
@@ -37,14 +37,14 @@ final class NaiveBackend {
         }
     }
 
-    @Subcomponent(modules = {HistoryModule.class, UnsafeDAOModule.class})
+    @Subcomponent(modules = {HistoryModule.class, JaggerDAOModule.class})
     interface History extends HealthService.HistoryEndpoint {
         @Subcomponent.Builder
         interface Builder extends HealthService.HistoryEndpoint.Builder {
         }
     }
 
-    @Subcomponent(modules = {SearchModule.class, UnsafeDAOModule.class})
+    @Subcomponent(modules = {SearchModule.class, JaggerDAOModule.class})
     interface Search extends HealthService.SearchEndpoint {
         @Subcomponent.Builder
         interface Builder extends HealthService.SearchEndpoint.Builder {

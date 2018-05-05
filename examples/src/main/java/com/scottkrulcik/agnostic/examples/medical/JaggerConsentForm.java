@@ -1,10 +1,12 @@
 package com.scottkrulcik.agnostic.examples.medical;
 
-import javax.inject.Inject;
-
+import com.scottkrulcik.agnostic.SanitizingFactory;
+import com.scottkrulcik.agnostic.annotations.ContextScope;
 import com.scottkrulcik.agnostic.examples.medical.Model.ConsentForm;
 import com.scottkrulcik.agnostic.examples.medical.Model.Doctor;
 import com.scottkrulcik.agnostic.examples.medical.Model.Person;
+
+import javax.inject.Inject;
 
 final class JaggerConsentForm extends ConsentForm {
 
@@ -41,7 +43,8 @@ final class JaggerConsentForm extends ConsentForm {
         return "Jagger" + delegate.toString();
     }
 
-    public static final class Factory {
+    @ContextScope
+    public static final class Factory implements SanitizingFactory<ConsentForm> {
         private final Person doctor;
 
         @Inject
@@ -49,7 +52,8 @@ final class JaggerConsentForm extends ConsentForm {
             this.doctor = doctor;
         }
 
-        public final ConsentForm wrap(ConsentForm raw) {
+        @Override
+        public final JaggerConsentForm wrap(ConsentForm raw) {
             return new JaggerConsentForm(raw, this);
         }
     }

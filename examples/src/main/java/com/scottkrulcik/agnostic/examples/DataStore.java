@@ -36,7 +36,7 @@ public final class DataStore {
         }
     }
 
-    <T> DAO<T> rawDAO(Class<T> clazz) {
+    public <T> DAO<T> rawDAO(Class<T> clazz) {
         final DataStore snapshot = this;
         return new DAO<T>(){
             @Override
@@ -51,7 +51,7 @@ public final class DataStore {
         };
     }
 
-    <T> DAO<T> sanitizedDAO(Class<T> clazz, SanitizingFactory<T> factory) {
+    public <T> DAO<T> sanitizedDAO(Class<T> clazz, SanitizingFactory<T> factory) {
         final DataStore snapshot = this;
         return new DAO<T>(){
             @Override

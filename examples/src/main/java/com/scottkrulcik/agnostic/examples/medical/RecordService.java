@@ -38,7 +38,11 @@ interface RecordService {
     interface AdHoc extends HealthServiceConfiguration {
     }
 
-    // TODO(skrulcik): implement JaggerRecordServiceModule
-    // @Component
-    // interface Jagger extends Naive { }
+    @Singleton
+    @Component(modules = {
+        DataStoreModule.class,
+        AdHocBackend.class,
+    })
+    interface Jagger extends HealthServiceConfiguration {
+    }
 }
