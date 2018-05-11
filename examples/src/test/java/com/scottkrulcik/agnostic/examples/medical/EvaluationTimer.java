@@ -18,14 +18,11 @@ import java.util.Set;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
-import static com.google.common.base.Preconditions.checkState;
 import static com.scottkrulcik.agnostic.examples.medical.sampledata.DataSet1_TestAccess.alice;
 import static com.scottkrulcik.agnostic.examples.medical.sampledata.DataSet1_TestAccess.bob;
 import static com.scottkrulcik.agnostic.examples.medical.sampledata.DataSet1_TestAccess.docC;
 import static com.scottkrulcik.agnostic.examples.medical.sampledata.DataSet1_TestAccess.docD;
 import static com.scottkrulcik.agnostic.examples.medical.sampledata.DataSet1_TestAccess.docE;
-import static com.scottkrulcik.agnostic.examples.medical.sampledata.DataSet1_TestAccess.psychRec1;
-import static com.scottkrulcik.agnostic.examples.medical.sampledata.DataSet1_TestAccess.psychRec2;
 import static java.lang.String.join;
 import static java.util.Arrays.stream;
 
@@ -40,6 +37,7 @@ public final class EvaluationTimer {
     private static Set<String> conditions = GeneratedDataSet.INSTANCE.records().stream().map(r -> r.condition()).collect(Collectors.toSet());
     // p0 is guaranteed not to have pysch records
     private static Person NO_PSYCH = Person.create("p0");
+    private static Person DOC = doctors.iterator().next();
 
     private static final Path TRIAL_DIR;
     static {
@@ -54,20 +52,20 @@ public final class EvaluationTimer {
                 service.medicalHistory(docC, NO_PSYCH);
             })
             .put("consent_author", service -> {
-                checkState(service.medicalHistory(docD, alice).history().contains(psychRec1));
+                service.medicalHistory(docD, alice).history();
             })
             .put("consent_form", service -> {
-                checkState(service.medicalHistory(docC, bob).history().contains(psychRec2));
+                service.medicalHistory(docC, bob).history();
             })
             .put("no_consent", service -> {
                 // Cannot check state because of the naive implementation
-                service.medicalHistory(docE, alice);
+                service.medicalHistory(docE, alice).history();
             })
             .put("simple_search", service -> {
-                service.patientsWithCondition(docC, "c1");
+                service.patientsWithCondition(docC, "c1").patients();
             })
             .put("psych_search", service -> {
-                checkState(!service.patientsWithCondition(doctors.iterator().next(), "pc1").patients().isEmpty());
+                service.patientsWithCondition(DOC, "pc1").patients();
             }
         ).build();
 
